@@ -1,0 +1,5 @@
+com\redhat\bookinfo\ratings\RatingsApplication.class
+com\redhat\bookinfo\ratings\RatingsRepository.class
+com\redhat\bookinfo\ratings\Rating.class
+com\redhat\bookinfo\ratings\PostgresH2UUIDType.class
+com\redhat\bookinfo\ratings\RatingsController.class
