@@ -1,0 +1,2 @@
+insert into rating (id, reviewer_id, product_id, rating) values ('160d4b28-3362-4f11-a82a-8f7b14d7fbdf', '449e3589-abab-4de0-8ced-239fee452d41', '2099a055-1e21-46ef-825e-9e0de93554ea', 5);
+insert into rating (id, reviewer_id, product_id, rating) values ('7a846fe8-fec5-4437-a5ba-1af0210a47ce', 'ea743176-e7e8-4660-b6db-5ce08457e76f', 'a071c269-369c-4f79-be03-6a41f27d6b5f', 1);

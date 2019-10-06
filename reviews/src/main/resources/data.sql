@@ -1,0 +1,2 @@
+insert into review (id, reviewer_id, product_id, review) values ('7b9d3405-6f5f-454b-88c2-0e22de3e5609', '449e3589-abab-4de0-8ced-239fee452d41', '2099a055-1e21-46ef-825e-9e0de93554ea', 'This was a wonderful book!');
+insert into review (id, reviewer_id, product_id, review) values ('06f81906-7f1c-4707-b99c-3a9c20cfbeb2', 'ea743176-e7e8-4660-b6db-5ce08457e76f', 'a071c269-369c-4f79-be03-6a41f27d6b5f', 'Could not finish the book. Too boring.');
