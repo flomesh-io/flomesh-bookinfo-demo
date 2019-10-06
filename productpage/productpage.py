@@ -308,7 +308,7 @@ def ratingsRoute(product_id):
 def getProducts():
     return [
         {
-            'id': 0,
+            'id': '9bc908be-0717-4eab-bb51-ea14f669ef20',
             'title': 'The Comedy of Errors',
             'descriptionHtml': '<a href="https://en.wikipedia.org/wiki/The_Comedy_of_Errors">Wikipedia Summary</a>: The Comedy of Errors is one of <b>William Shakespeare\'s</b> early plays. It is his shortest and one of his most farcical comedies, with a major part of the humour coming from slapstick and mistaken identity, in addition to puns and word play.'
         }
@@ -317,10 +317,11 @@ def getProducts():
 
 def getProduct(product_id):
     products = getProducts()
-    if product_id + 1 > len(products):
-        return None
-    else:
-        return products[product_id]
+    #if product_id + 1 > len(products):
+    #    return None
+    #else:
+    #    return products[product_id]
+    return products[0]
 
 
 def getProductDetails(product_id, headers):

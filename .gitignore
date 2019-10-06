@@ -1,0 +1,16 @@
+.settings/
+details/.classpath
+details/.factorypath
+details/.project
+details/.settings/
+details/target/
+ratings/.classpath
+ratings/.factorypath
+ratings/.project
+ratings/.settings/
+reviews/.classpath
+reviews/.factorypath
+reviews/.project
+reviews/.settings/
+reviews/target/
+
