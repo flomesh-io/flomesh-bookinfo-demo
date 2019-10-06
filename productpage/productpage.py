@@ -254,7 +254,7 @@ def floodReviews(product_id, headers):
 @app.route('/productpage')
 @trace()
 def front():
-    product_id = 0  # TODO: replace default value
+    product_id = 'a071c269-369c-4f79-be03-6a41f27d6b5f'  # TODO: replace default value
     headers = getForwardHeaders(request)
     user = session.get('user', '')
     product = getProduct(product_id)
