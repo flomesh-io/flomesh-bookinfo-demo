@@ -27,7 +27,7 @@
 		<dependency>
 			<version>0.2.2</version>
 			<groupId>io.opentracing.contrib</groupId>
-			<artifactId>opentracing-spring-jaeger-web-starter</artifactId>
+			<artifactId>opentracing-spring-jaeger-cloud-starter</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
