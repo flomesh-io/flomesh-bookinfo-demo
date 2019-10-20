@@ -6,3 +6,7 @@ spring:
   driver-class-name: org.h2.Driver
 server:
   port: 8101
+opentracing:
+  jaeger:
+    http-sender:
+      url: http://localhost:14268/api/traces

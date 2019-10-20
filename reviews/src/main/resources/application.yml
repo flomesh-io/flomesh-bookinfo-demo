@@ -1,6 +1,5 @@
 bookinfo-ratings:
-  #url: ${RATINGS_URL}
-  url: http://localhost:8101
+  url: ${RATINGS_URL}
 
 ratings-enabled: true
 
@@ -31,3 +30,8 @@ management:
 #      circuitBreaker:
 #        requestVolumeThreshold: 5 # 5 failed requests in 5 seconds will trip circuit breaker
 #        sleepWindowInMillisecond: 5000
+
+opentracing:
+  jaeger:
+    http-sender:
+      url: http://localhost:14268/api/traces
