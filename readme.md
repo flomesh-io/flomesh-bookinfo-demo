@@ -10,9 +10,7 @@ It will generated springboot fat *jar* file in each dir targets subdir
 
 # Run
 
-## Run in vm:
-
-1. start rating service: 
+## start rating service: 
 ~~~~~bash
 java -jar bookinfo-ratings-1.0.0-SNAPSHOT.jar --opentracing.jaeger.http-sender.url=http://jaeger-collector.default.svc:14268/api/traces
 ~~~~~
@@ -38,7 +36,7 @@ or, query ratings by product_id in kubernetes:
 curl http://bookinfo-ratings.default.svc:9080/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
 ~~~~~
 
-2. start review service:
+## start review service:
 ~~~~~bash
 java -jar bookinfo-reviews-1.0.0-SNAPSHOT.jar --bookinfo-ratings.url=localhost:8101 --opentracing.jaeger.http-sender.url=http://jaeger-collector.default.svc:14268/api/traces
 ~~~~~
@@ -69,7 +67,7 @@ or, query review by product_id in k8s:
 curl http://bookinfo-reviews.default.svc:9080/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
 ~~~~~
 
-3. start detail service:
+## start detail service:
 ~~~~~bash
 java -jar bookinfo-details-1.0.0-SNAPSHOT.jar --opentracing.jaeger.http-sender.url=http://jaeger-collector.default.svc:14268/api/traces
 ~~~~~
