@@ -6,7 +6,7 @@ mvn clean package
 ~~~~~
 It will generated springboot fat *jar* file in each dir targets subdir
 
-* For productpage, it's written in python. It's not need to build
+* For productpage, it's written in python, no need to build
 
 # Run
 
