@@ -6,9 +6,18 @@ spring:
   driver-class-name: org.h2.Driver
   application:
     name: bookinfo-ratings
+  zipkin:
+    base-url: http://zipkin.default.svc:9411/
+    sender:
+      type: web
+  sleuth:
+    sampler:
+      percentage: 1.0
+
 server:
   port: 8101
 opentracing:
   jaeger:
     http-sender:
       url: ${JAEGER_URL}
+

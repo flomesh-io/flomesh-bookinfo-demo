@@ -1,6 +1,13 @@
 spring:
   application:
     name: bookinfo-details
+  zipkin:
+    base-url: http://zipkin.default.svc:9411/
+    sender:
+      type: web
+  sleuth:
+    sampler:
+      percentage: 1.0
 
 server:
   port: 8103
@@ -9,4 +16,3 @@ opentracing:
   jaeger:
     http-sender:
       url: ${JAEGER_URL}
-
