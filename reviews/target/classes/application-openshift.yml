@@ -1,0 +1,31 @@
+bookinfo-ratings:
+  url: localhost:8101
+
+ratings-enabled: ${RATINGS_ENABLED:true}
+
+server:
+  port: 8080
+
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/reviews
+    username: bookinfo
+    password: bookino
+  jpa:
+    hibernate:
+      ddl-auto: create-drop # This is here for testing. Should not be set to create-drop for production. Set to validate.
+
+feign:
+  hystrix:
+    enabled: true
+
+management:
+  security:
+    enabled: false # Will show more metrics, including open circuit breakers, on /health
+hystrix:
+  command:
+    default:
+      circuitBreaker:
+        requestVolumeThreshold: 5 # 5 failed requests in 5 seconds will trip circuit breaker
+        sleepWindowInMillisecond: 5000

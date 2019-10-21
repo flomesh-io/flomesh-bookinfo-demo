@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: bookinfo-details
+
+server:
+  port: 8103
+
+opentracing:
+  jaeger:
+    http-sender:
+      url: ${JAEGER_URL}
+

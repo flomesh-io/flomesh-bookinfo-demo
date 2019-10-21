@@ -1,0 +1,10 @@
+com/redhat/bookinfo/ratings/RatingsClient$RatingsUnavailableException.class
+com/redhat/bookinfo/ratings/RatingsClient.class
+com/redhat/bookinfo/ratings/Rating.class
+com/redhat/bookinfo/reviews/ReviewsApplication.class
+com/redhat/bookinfo/reviews/ReviewsController.class
+com/redhat/bookinfo/reviews/PostgresH2UUIDType.class
+com/redhat/bookinfo/reviews/ReviewsRepository.class
+com/redhat/bookinfo/ratings/RatingsClient$RatingsClientFallback.class
+com/redhat/bookinfo/reviews/Review.class
+com/redhat/bookinfo/reviews/ReviewDto.class

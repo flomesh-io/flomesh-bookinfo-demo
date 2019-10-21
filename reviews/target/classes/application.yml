@@ -1,0 +1,37 @@
+bookinfo-ratings:
+  url: ${RATINGS_URL}
+
+ratings-enabled: true
+
+server:
+  port: 8102
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:reviews;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+    jpa:
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+
+feign:
+  hystrix:
+    enabled: true
+
+management:
+  security:
+    enabled: false # Will show more metrics, including open circuit breakers, on /health
+#hystrix:
+#  command:
+#    default:
+#      circuitBreaker:
+#        requestVolumeThreshold: 5 # 5 failed requests in 5 seconds will trip circuit breaker
+#        sleepWindowInMillisecond: 5000
+
+opentracing:
+  jaeger:
+    http-sender:
+      url: ${JAEGER_URL}

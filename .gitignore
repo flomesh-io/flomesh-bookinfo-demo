@@ -3,7 +3,6 @@ details/.classpath
 details/.factorypath
 details/.project
 details/.settings/
-details/target/
 ratings/.classpath
 ratings/.factorypath
 ratings/.project
@@ -12,5 +11,5 @@ reviews/.classpath
 reviews/.factorypath
 reviews/.project
 reviews/.settings/
-reviews/target/
+.vscode
 
