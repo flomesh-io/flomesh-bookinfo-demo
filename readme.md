@@ -80,7 +80,7 @@ curl http://localhost:8103/details/1234567890
 
 or, query detail by isbn in k8s:
 ~~~~~bash
-curl http://bookinfo-details.default.svc/details/1234567890
+curl http://bookinfo-details.default.svc:9080/details/1234567890
 ~~~~~
 
 
