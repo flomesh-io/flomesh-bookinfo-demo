@@ -4,9 +4,11 @@ spring:
   username: sa
   password:
   driver-class-name: org.h2.Driver
+  application:
+    name: bookinfo-ratings
 server:
   port: 8101
 opentracing:
   jaeger:
     http-sender:
-      url: http://localhost:14268/api/traces
+      url: ${JAEGER_URL}

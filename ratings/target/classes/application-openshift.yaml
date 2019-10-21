@@ -1,0 +1,12 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/ratings
+    username: bookinfo
+    password: bookino
+  jpa:
+    hibernate:
+      ddl-auto: create-drop # This is here for testing. Should not be set to create-drop for production. Set to validate.

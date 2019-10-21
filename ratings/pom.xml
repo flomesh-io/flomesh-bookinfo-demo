@@ -24,11 +24,6 @@
     </properties>
 
     <dependencies>
-        <!--<dependency>
-			<version>0.2.2</version>
-			<groupId>io.opentracing.contrib</groupId>
-			<artifactId>opentracing-spring-jaeger-cloud-starter</artifactId>
-		</dependency>-->
         <dependency>
             <groupId>io.opentracing.contrib</groupId>
             <artifactId>opentracing-spring-jaeger-starter</artifactId>
