@@ -1,12 +1,31 @@
 # Build
 
-* For ratings, reviews, details, use mvn to run that
+* For config-service, discovery-server, ratings, reviews, details, use mvn to run that
 ~~~~~bash
 mvn clean package
 ~~~~~
 It will generated springboot fat *jar* file in each dir targets subdir
 
 * For productpage, it's written in python, no need to build
+
+Then run the following command to build docker images:
+```bash
+./docker-build-push.sh 
+```
+
+As the services has startup dependencies, you need to deploy it one by one following the strict sequence:
+
+`kubectl apply -f discovery-server.yaml`
+
+Then check the running status and logs to ensure the discovery server starts successfully and is UP.
+
+`kubectl apply -f config-service.yaml`
+
+Then check the running status and logs to ensure the config server starts successfully and is UP.
+
+`kubectl apply -f bookinfo.yaml`
+
+To deploy the sample services.
 
 # Run
 
