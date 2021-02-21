@@ -1,6 +1,0 @@
-com/redhat/bookinfo/details/Detail.class
-com/redhat/bookinfo/details/DetailsController.class
-com/redhat/bookinfo/details/googlebooks/GoogleBooksVolumeInfoWrapper.class
-com/redhat/bookinfo/details/googlebooks/GoogleBooksItemsWrapper.class
-com/redhat/bookinfo/details/googlebooks/GoogleBooksWrapper.class
-com/redhat/bookinfo/details/DetailsApplication.class
