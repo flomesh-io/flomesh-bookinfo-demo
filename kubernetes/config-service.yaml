@@ -1,0 +1,46 @@
+##################################################################################################
+# Config service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: samples-config-service
+  labels:
+    app: config
+    service: config
+spec:
+  ports:
+    - port: 8888
+      name: http
+      targetPort: 8888
+  selector:
+    app: config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: samples-config-service-v1
+  labels:
+    app: config
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: config
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: config
+        version: v1
+    spec:
+      containers:
+        - name: config
+          image: docker.io/flomesh/samples-config-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8888
+          env:
+            - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
+              value: samples-discovery-server
