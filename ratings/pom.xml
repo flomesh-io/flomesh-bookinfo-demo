@@ -71,14 +71,14 @@
         </dependency>
     </dependencies>
 
-    <build>
+    <!--<build>
         <plugins>
             <plugin>
                 <groupId>com.spotify</groupId>
                 <artifactId>dockerfile-maven-plugin</artifactId>
             </plugin>
         </plugins>
-    </build>
+    </build>-->
 
     <profiles>
         <profile>

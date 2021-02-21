@@ -73,7 +73,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
-		<pluginManagement>
+		<!--<pluginManagement>
 			<plugins>
 				<plugin>
 					<groupId>com.spotify</groupId>
@@ -96,6 +96,6 @@
 					</configuration>
 				</plugin>
 			</plugins>
-		</pluginManagement>
+		</pluginManagement>-->
 	</build>
 </project>
