@@ -25,6 +25,53 @@
 #   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml -l account=reviews # reviews ServiceAccount
 #   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml -l app=reviews,version=v3 # reviews-v3 Deployment
 ##################################################################################################
+##################################################################################################
+# API Gateway
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: samples-api-gateway
+  labels:
+    app: gateway
+    service: gateway
+spec:
+  ports:
+    - port: 10000
+      name: http
+      targetPort: 10000
+  selector:
+    app: gateway
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: samples-api-gateway-v1
+  labels:
+    app: gateway
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: gateway
+        version: v1
+    spec:
+      containers:
+        - name: gateway
+          image: docker.io/flomesh/samples-api-gateway:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 10000
+          env:
+            - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
+              value: samples-discovery-server
+---
 
 ##################################################################################################
 # Details service
