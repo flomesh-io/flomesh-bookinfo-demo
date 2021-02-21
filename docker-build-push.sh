@@ -1,6 +1,7 @@
 #!/bin/bash
 
 DOCKER_PREFIX=docker.io/flomesh
+GATEWAY_IMG=${DOCKER_PREFIX}/samples-api-gateway:latest
 CONFIG_IMG=${DOCKER_PREFIX}/samples-config-service:latest
 DISCOVERY_IMG=${DOCKER_PREFIX}/samples-discovery-server:latest
 RATINGS_IMG=${DOCKER_PREFIX}/samples-bookinfo-ratings:latest
@@ -24,6 +25,15 @@ printf "\n"
 cd ../discovery-server
 docker build -t ${DISCOVERY_IMG}  .
 docker push ${DISCOVERY_IMG}
+printf "\n"
+
+echo "-------------------------------------------------------------------"
+echo "Build & Push ${GATEWAY_IMG}"
+echo "-------------------------------------------------------------------"
+printf "\n"
+cd ../api-gateway
+docker build -t ${GATEWAY_IMG}  .
+docker push ${GATEWAY_IMG}
 printf "\n"
 
 echo "-------------------------------------------------------------------"
