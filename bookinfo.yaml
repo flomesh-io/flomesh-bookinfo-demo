@@ -27,12 +27,105 @@
 ##################################################################################################
 
 ##################################################################################################
+# Config service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: samples-config-service
+  labels:
+    app: config
+    service: config
+spec:
+  ports:
+    - port: 8888
+      name: http
+      targetPort: 8888
+  selector:
+    app: config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: samples-config-service-v1
+  labels:
+    app: config
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: config
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: config
+        version: v1
+    spec:
+      containers:
+        - name: config
+          image: docker.io/flomesh/samples-config-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8888
+---
+
+##################################################################################################
+# Discovery service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: samples-discovery-server
+  labels:
+    app: discovery
+    service: discovery
+spec:
+  ports:
+    - port: 8761
+      name: http
+      targetPort: 8761
+  selector:
+    app: discovery
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: samples-discovery-server-v1
+  labels:
+    app: discovery
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: discovery
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: discovery
+        version: v1
+    spec:
+      containers:
+        - name: discovery
+          image: docker.io/flomesh/samples-discovery-server:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8761
+          env:
+          - name: CONFIG_SVC_HOST
+            value: samples-config-service.default.svc
+---
+
+##################################################################################################
 # Details service
 ##################################################################################################
 apiVersion: v1
 kind: Service
 metadata:
-  name: bookinfo-details
+  name: samples-bookinfo-details
   labels:
     app: details
     service: details
@@ -47,7 +140,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bookinfo-details-v1
+  name: samples-bookinfo-details-v1
   labels:
     app: details
     version: v1
@@ -65,10 +158,13 @@ spec:
     spec:
       containers:
       - name: details
-        image: docker.io/flomesh/bookinfo-details:latest
+        image: docker.io/flomesh/samples-bookinfo-details:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8103
+        env:
+        - name: CONFIG_SVC_HOST
+          value: samples-config-service.default.svc
 ---
 ##################################################################################################
 # Ratings service
@@ -76,7 +172,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: bookinfo-ratings
+  name: samples-bookinfo-ratings
   labels:
     app: ratings
     service: ratings
@@ -91,7 +187,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bookinfo-ratings-v1
+  name: samples-bookinfo-ratings-v1
   labels:
     app: ratings
     version: v1
@@ -109,10 +205,13 @@ spec:
     spec:
       containers:
       - name: ratings
-        image: docker.io/flomesh/bookinfo-ratings:latest
+        image: docker.io/flomesh/samples-bookinfo-ratings:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8101
+        env:
+        - name: CONFIG_SVC_HOST
+          value: samples-config-service.default.svc
 ---
 ##################################################################################################
 # Reviews service
@@ -120,7 +219,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: bookinfo-reviews
+  name: samples-bookinfo-reviews
   labels:
     app: reviews
     service: reviews
@@ -135,7 +234,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bookinfo-reviews-v1
+  name: samples-bookinfo-reviews-v1
   labels:
     app: reviews
     version: v1
@@ -153,10 +252,13 @@ spec:
     spec:
       containers:
       - name: reviews
-        image: docker.io/flomesh/bookinfo-reviews:latest
+        image: docker.io/flomesh/samples-bookinfo-reviews:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8102
+        env:
+        - name: CONFIG_SVC_HOST
+          value: samples-config-service.default.svc
 ---
 ##################################################################################################
 # Productpage services
@@ -164,7 +266,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: bookinfo-productpage
+  name: samples-bookinfo-productpage
   labels:
     app: productpage
     service: productpage
@@ -179,7 +281,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bookinfo-productpage-v1
+  name: samples-bookinfo-productpage-v1
   labels:
     app: productpage
     version: v1
@@ -201,12 +303,12 @@ spec:
         - name: SERVICES_DOMAIN
           value: default.svc
         - name: DETAILS_HOSTNAME
-          value: bookinfo-details
+          value: samples-bookinfo-details
         - name: RATINGS_HOSTNAME
-          value: bookinfo-ratings
+          value: samples-bookinfo-ratings
         - name: REVIEWS_HOSTNAME
-          value: bookinfo-reviews
-        image: docker.io/flomesh/bookinfo-productpage:latest
+          value: samples-bookinfo-reviews
+        image: docker.io/flomesh/samples-bookinfo-productpage:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
