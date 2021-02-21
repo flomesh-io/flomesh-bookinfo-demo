@@ -1,8 +1,0 @@
-/root/flomesh-bookinfo/reviews/src/main/java/com/redhat/bookinfo/ratings/Rating.java
-/root/flomesh-bookinfo/reviews/src/main/java/com/redhat/bookinfo/ratings/RatingsClient.java
-/root/flomesh-bookinfo/reviews/src/main/java/com/redhat/bookinfo/reviews/PostgresH2UUIDType.java
-/root/flomesh-bookinfo/reviews/src/main/java/com/redhat/bookinfo/reviews/ReviewsRepository.java
-/root/flomesh-bookinfo/reviews/src/main/java/com/redhat/bookinfo/reviews/ReviewDto.java
-/root/flomesh-bookinfo/reviews/src/main/java/com/redhat/bookinfo/reviews/ReviewsApplication.java
-/root/flomesh-bookinfo/reviews/src/main/java/com/redhat/bookinfo/reviews/ReviewsController.java
-/root/flomesh-bookinfo/reviews/src/main/java/com/redhat/bookinfo/reviews/Review.java
