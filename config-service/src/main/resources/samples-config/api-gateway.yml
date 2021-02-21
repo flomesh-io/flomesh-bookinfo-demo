@@ -1,0 +1,15 @@
+server:
+  port: 10000
+
+endpoints:
+  restart:
+    enabled: true
+  shutdown:
+    enabled: true
+  health:
+    sensitive: false
+
+zuul:
+  ribbon:
+    eager-load:
+      enabled: true

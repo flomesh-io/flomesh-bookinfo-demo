@@ -1,3 +1,13 @@
+spring:
+  application:
+    name: bookinfo-reviews
+  cloud:
+    config:
+      fail-fast: true
+      discovery:
+        enabled: true
+        service-id: config-service
+
 eureka:
   instance:
     prefer-ip-address: true

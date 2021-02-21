@@ -14,6 +14,7 @@ spring:
 
 server:
   port: 8101
+
 opentracing:
   jaeger:
     http-sender:
