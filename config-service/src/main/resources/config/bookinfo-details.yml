@@ -1,11 +1,4 @@
 spring:
-  datasource:
-  url: jdbc:h2:mem:products;DB_CLOSE_ON_EXIT=FALSE
-  username: sa
-  password:
-  driver-class-name: org.h2.Driver
-  application:
-    name: bookinfo-ratings
   zipkin:
     base-url: http://zipkin.default.svc:9411/
     sender:
@@ -15,9 +8,9 @@ spring:
       percentage: 1.0
 
 server:
-  port: 8101
+  port: 8103
+
 opentracing:
   jaeger:
     http-sender:
       url: ${JAEGER_URL}
-

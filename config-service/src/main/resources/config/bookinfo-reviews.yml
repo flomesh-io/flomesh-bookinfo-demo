@@ -1,5 +1,5 @@
 bookinfo-ratings:
-  url: ${RATINGS_URL}
+  url: http://bookinfo-ratings:8101
 
 ratings-enabled: true
 

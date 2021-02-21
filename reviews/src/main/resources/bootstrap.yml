@@ -1,7 +1,0 @@
-spring:
-  application:
-    name: bookinfo-reviews
-    cloud:
-      kubernetes:
-        config:
-          name: bookinfo-reviews-config
