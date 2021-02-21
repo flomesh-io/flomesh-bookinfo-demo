@@ -1,5 +1,5 @@
 bookinfo-ratings:
-  url: http://bookinfo-ratings:8101
+  url: http://${K8S_SAMPLES_BOOKINFO_RATINGS_HOSTNAME:localhost}:8101
 
 ratings-enabled: true
 

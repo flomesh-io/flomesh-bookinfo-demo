@@ -172,6 +172,8 @@ spec:
             value: samples-config-service
           - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
             value: samples-discovery-server
+          - name: K8S_SAMPLES_BOOKINFO_RATINGS_HOSTNAME
+            value: samples-bookinfo-ratings
 ---
 ##################################################################################################
 # Productpage services
