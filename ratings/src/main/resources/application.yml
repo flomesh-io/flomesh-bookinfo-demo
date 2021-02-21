@@ -1,0 +1,8 @@
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    registerWithEureka: true
+    fetchRegistry: true
+    serviceUrl:
+      defaultZone: http://${SAMPLES_DISCOVERY_SERVER_SERVICE_HOST:localhost}:${SAMPLES_DISCOVERY_SERVER_SERVICE_PORT:8761}/eureka/

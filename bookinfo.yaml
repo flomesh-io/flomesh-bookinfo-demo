@@ -27,6 +27,51 @@
 ##################################################################################################
 
 ##################################################################################################
+# Discovery service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: samples-discovery-server
+  labels:
+    app: discovery
+    service: discovery
+spec:
+  ports:
+    - port: 8761
+      name: http
+      targetPort: 8761
+  selector:
+    app: discovery
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: samples-discovery-server-v1
+  labels:
+    app: discovery
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: discovery
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: discovery
+        version: v1
+    spec:
+      containers:
+        - name: discovery
+          image: docker.io/flomesh/samples-discovery-server:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8761
+---
+
+##################################################################################################
 # Config service
 ##################################################################################################
 apiVersion: v1
@@ -72,54 +117,6 @@ spec:
 ---
 
 ##################################################################################################
-# Discovery service
-##################################################################################################
-apiVersion: v1
-kind: Service
-metadata:
-  name: samples-discovery-server
-  labels:
-    app: discovery
-    service: discovery
-spec:
-  ports:
-    - port: 8761
-      name: http
-      targetPort: 8761
-  selector:
-    app: discovery
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: samples-discovery-server-v1
-  labels:
-    app: discovery
-    version: v1
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: discovery
-      version: v1
-  template:
-    metadata:
-      labels:
-        app: discovery
-        version: v1
-    spec:
-      containers:
-        - name: discovery
-          image: docker.io/flomesh/samples-discovery-server:latest
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 8761
-          env:
-          - name: CONFIG_SVC_HOST
-            value: samples-config-service.default.svc
----
-
-##################################################################################################
 # Details service
 ##################################################################################################
 apiVersion: v1
@@ -162,9 +159,6 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8103
-        env:
-        - name: CONFIG_SVC_HOST
-          value: samples-config-service.default.svc
 ---
 ##################################################################################################
 # Ratings service
@@ -209,9 +203,6 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8101
-        env:
-        - name: CONFIG_SVC_HOST
-          value: samples-config-service.default.svc
 ---
 ##################################################################################################
 # Reviews service
@@ -256,9 +247,6 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8102
-        env:
-        - name: CONFIG_SVC_HOST
-          value: samples-config-service.default.svc
 ---
 ##################################################################################################
 # Productpage services
