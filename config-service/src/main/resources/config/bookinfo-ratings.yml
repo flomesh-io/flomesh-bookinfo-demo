@@ -4,10 +4,10 @@ spring:
   username: sa
   password:
   driver-class-name: org.h2.Driver
-  zipkin:
-    base-url: http://zipkin.default.svc:9411/
-    sender:
-      type: web
+#  zipkin:
+#    base-url: http://zipkin.default.svc:9411/
+#    sender:
+#      type: web
   sleuth:
     sampler:
       percentage: 1.0

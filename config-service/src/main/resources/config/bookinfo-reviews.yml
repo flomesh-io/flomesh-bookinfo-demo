@@ -16,10 +16,10 @@ spring:
       properties:
         hibernate:
           dialect: org.hibernate.dialect.PostgreSQLDialect
-  zipkin:
-    base-url: http://zipkin.default.svc:9411/
-    sender:
-      type: web
+#  zipkin:
+#    base-url: http://zipkin.default.svc:9411/
+#    sender:
+#      type: web
   sleuth:
     sampler:
       percentage: 1.0
