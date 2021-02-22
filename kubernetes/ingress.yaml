@@ -54,7 +54,7 @@ spec:
             const target = ROUTES[path];
             if (target === undefined) {
               context.set('pipeline', 'sample-svc');
-              context.set('target', 'samples-api-gateway:10000');
+              context.set('target', 'samples-api-gateway:10010');
             } else {
               context.set('pipeline', 'sample-svc');
               context.set('target', target);
