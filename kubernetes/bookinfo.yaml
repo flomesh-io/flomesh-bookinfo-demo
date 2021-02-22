@@ -40,6 +40,9 @@ spec:
     - port: 10000
       name: http
       targetPort: 10000
+    - port: 10010
+      name: sidecar
+      targetPort: 10010
   selector:
     app: gateway
 ---
@@ -61,6 +64,8 @@ spec:
       labels:
         app: gateway
         version: v1
+      annotations:
+        "flomesh.io/inject": "true"
     spec:
       containers:
         - name: gateway
