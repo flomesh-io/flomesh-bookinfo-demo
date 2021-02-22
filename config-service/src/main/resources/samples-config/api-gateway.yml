@@ -13,3 +13,8 @@ zuul:
   ribbon:
     eager-load:
       enabled: true
+
+hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds: 35000
+ribbon:
+  ConnectTimeout: 3000
+  ReadTimeout: 5000
