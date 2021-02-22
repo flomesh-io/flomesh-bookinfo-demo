@@ -51,7 +51,7 @@ spec:
               input.type === 'messagestart'
           ) {
             const path = context.get('in.path');
-            const target = ROUTES[path.split('/').[1]];
+            const target = ROUTES[path.split('/')[1]];
             if (target === undefined) {
               context.set('pipeline', '404');
             } else {
