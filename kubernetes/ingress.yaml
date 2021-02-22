@@ -51,12 +51,13 @@ spec:
               input.type === 'messagestart'
           ) {
             const path = context.get('in.path');
-            const target = ROUTES[path.split('/')[1]];
+            const target = ROUTES[path];
             if (target === undefined) {
-              context.set('pipeline', '404');
+              context.set('pipeline', 'sample-svc');
+              context.set('target', 'samples-api-gateway:10000');
             } else {
               context.set('pipeline', 'sample-svc');
-              context.set('target', target + path);
+              context.set('target', target);
             }
           }
 
@@ -66,8 +67,5 @@ spec:
       );
     routes.js: |
       export default {
-        'bookinfo-details': 'samples-bookinfo-details:8113',
-        'bookinfo-ratings': 'samples-bookinfo-ratings:8111',
-        'bookinfo-reviews': 'samples-bookinfo-reviews:8112',
-        '': 'samples-bookinfo-productpage:9090'
+        '/': 'samples-bookinfo-productpage:9090'
       }
