@@ -64,7 +64,7 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: docker.io/flomesh/samples-api-gateway:latest
+          image: docker.io/flomesh/samples-api-gateway:dev
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 10000
@@ -114,7 +114,7 @@ spec:
     spec:
       containers:
       - name: details
-        image: docker.io/flomesh/samples-bookinfo-details:latest
+        image: docker.io/flomesh/samples-bookinfo-details:dev
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8103
@@ -163,7 +163,7 @@ spec:
     spec:
       containers:
       - name: ratings
-        image: docker.io/flomesh/samples-bookinfo-ratings:latest
+        image: docker.io/flomesh/samples-bookinfo-ratings:dev
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8101
@@ -212,7 +212,7 @@ spec:
     spec:
       containers:
       - name: reviews
-        image: docker.io/flomesh/samples-bookinfo-reviews:latest
+        image: docker.io/flomesh/samples-bookinfo-reviews:dev
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8102
@@ -273,7 +273,7 @@ spec:
           value: samples-bookinfo-ratings
         - name: REVIEWS_HOSTNAME
           value: samples-bookinfo-reviews
-        image: docker.io/flomesh/samples-bookinfo-productpage:latest
+        image: docker.io/flomesh/samples-bookinfo-productpage:dev
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080

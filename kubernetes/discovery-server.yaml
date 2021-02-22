@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
         - name: discovery
-          image: docker.io/flomesh/samples-discovery-server:latest
+          image: docker.io/flomesh/samples-discovery-server:dev
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8761

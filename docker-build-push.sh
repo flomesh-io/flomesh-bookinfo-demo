@@ -1,13 +1,13 @@
 #!/bin/bash
 
 DOCKER_PREFIX=docker.io/flomesh
-GATEWAY_IMG=${DOCKER_PREFIX}/samples-api-gateway:latest
-CONFIG_IMG=${DOCKER_PREFIX}/samples-config-service:latest
-DISCOVERY_IMG=${DOCKER_PREFIX}/samples-discovery-server:latest
-RATINGS_IMG=${DOCKER_PREFIX}/samples-bookinfo-ratings:latest
-REVIEWS_IMG=${DOCKER_PREFIX}/samples-bookinfo-reviews:latest
-DETAILS_IMG=${DOCKER_PREFIX}/samples-bookinfo-details:latest
-PRODUCT_PAGE_IMG=${DOCKER_PREFIX}/samples-bookinfo-productpage:latest
+GATEWAY_IMG=${DOCKER_PREFIX}/samples-api-gateway:dev
+CONFIG_IMG=${DOCKER_PREFIX}/samples-config-service:dev
+DISCOVERY_IMG=${DOCKER_PREFIX}/samples-discovery-server:dev
+RATINGS_IMG=${DOCKER_PREFIX}/samples-bookinfo-ratings:dev
+REVIEWS_IMG=${DOCKER_PREFIX}/samples-bookinfo-reviews:dev
+DETAILS_IMG=${DOCKER_PREFIX}/samples-bookinfo-details:dev
+PRODUCT_PAGE_IMG=${DOCKER_PREFIX}/samples-bookinfo-productpage:dev
 
 echo "-------------------------------------------------------------------"
 echo "Build & Push ${CONFIG_IMG}"
