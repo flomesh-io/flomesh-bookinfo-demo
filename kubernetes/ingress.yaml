@@ -46,13 +46,12 @@ spec:
 
       export default (output, context) => (
         input => {
-
           // Find route on every message start
           if (input instanceof Event &&
               input.type === 'messagestart'
           ) {
             const path = context.get('in.path');
-            const target = ROUTES[path];
+            const target = ROUTES[path.split('/').[1]];
             if (target === undefined) {
               context.set('pipeline', '404');
             } else {
@@ -67,8 +66,8 @@ spec:
       );
     routes.js: |
       export default {
-        '/bookinfo-details': 'samples-bookinfo-details:8113',
-        '/bookinfo-ratings': 'samples-bookinfo-ratings:8111',
-        '/bookinfo-reviews': 'samples-bookinfo-reviews:8112',
-        '/': 'samples-bookinfo-productpage:9090'
+        'bookinfo-details': 'samples-bookinfo-details:8113',
+        'bookinfo-ratings': 'samples-bookinfo-ratings:8111',
+        'bookinfo-reviews': 'samples-bookinfo-reviews:8112',
+        '': 'samples-bookinfo-productpage:9090'
       }
