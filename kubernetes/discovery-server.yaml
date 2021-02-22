@@ -13,6 +13,9 @@ spec:
     - port: 8761
       name: http
       targetPort: 8761
+    - port: 8771
+      name: sidecar
+      targetPort: 8771
   selector:
     app: discovery
 ---
