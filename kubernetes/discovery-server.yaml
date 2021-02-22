@@ -34,6 +34,8 @@ spec:
       labels:
         app: discovery
         version: v1
+      annotations:
+        "flomesh.io/inject": "true"
     spec:
       containers:
         - name: discovery

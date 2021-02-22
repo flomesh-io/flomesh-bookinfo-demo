@@ -71,6 +71,8 @@ spec:
           env:
             - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
               value: samples-discovery-server
+            - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
+              value: "8771"
 ---
 
 ##################################################################################################
@@ -119,6 +121,8 @@ spec:
         env:
           - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
             value: samples-discovery-server
+          - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
+            value: "8771"
 ---
 ##################################################################################################
 # Ratings service
@@ -166,6 +170,8 @@ spec:
         env:
           - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
             value: samples-discovery-server
+          - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
+            value: "8771"
 ---
 ##################################################################################################
 # Reviews service
@@ -213,6 +219,8 @@ spec:
         env:
           - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
             value: samples-discovery-server
+          - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
+            value: "8771"
           - name: K8S_SAMPLES_BOOKINFO_RATINGS_HOSTNAME
             value: samples-bookinfo-ratings
 ---
@@ -230,6 +238,7 @@ spec:
   ports:
   - port: 9080
     name: http
+    targetPort: 9080
   selector:
     app: productpage
   type: LoadBalancer
