@@ -1,0 +1,74 @@
+apiVersion: flomesh.io/v1
+kind: Proxy
+metadata:
+  name: samples-pipy-ingress
+spec:
+  mode: Ingress
+  tplMode: Raw
+  image: flomesh/pipy:latest
+  port: 6000
+  config:
+    config.cfg: |
+      pipy
+        pipeline :6000
+          decode-http-request
+            prefix = in
+          print
+          # This script controls variables ${pipeline} and ${target}
+          script
+            source = dispatch.js
+          # Forwards to pipeline 'sample-svc' or '404'
+          proxy
+            to = ${pipeline}
+
+        #
+        # When route is found, forwards to ${target}
+        #
+        pipeline sample-svc
+          encode-http-request
+            prefix = in
+          proxy-tcp
+            to = ${target}
+
+        #
+        # When route is not found, responds with 404
+        #
+        pipeline 404
+          hello
+            message = 404(No route)\n
+          encode-http-response
+            prefix = in
+            status = Not Found
+            status_code = 404
+
+    dispatch.js: |
+      import ROUTES from './routes.js';
+
+      export default (output, context) => (
+        input => {
+
+          // Find route on every message start
+          if (input instanceof Event &&
+              input.type === 'messagestart'
+          ) {
+            const path = context.get('in.path');
+            const target = ROUTES[path];
+            if (target === undefined) {
+              context.set('pipeline', '404');
+            } else {
+              context.set('pipeline', 'sample-svc');
+              context.set('target', target);
+            }
+          }
+
+          // Pass down everything
+          output(input);
+        }
+      );
+    routes.js: |
+      export default {
+        '/bookinfo-details': 'samples-bookinfo-details:8113',
+        '/bookinfo-ratings': 'samples-bookinfo-ratings:8111',
+        '/bookinfo-reviews': 'samples-bookinfo-reviews:8112',
+        '/': 'samples-bookinfo-productpage:9090'
+      }
