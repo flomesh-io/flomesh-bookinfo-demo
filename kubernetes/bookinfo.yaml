@@ -87,9 +87,12 @@ metadata:
     service: details
 spec:
   ports:
-  - port: 9080
+  - port: 8103
     name: http
     targetPort: 8103
+  - port: 8113
+    name: sidecar
+    targetPort: 8113
   selector:
     app: details
 ---
@@ -111,6 +114,8 @@ spec:
       labels:
         app: details
         version: v1
+      annotations:
+        "flomesh.io/inject": "true"
     spec:
       containers:
       - name: details
@@ -136,9 +141,12 @@ metadata:
     service: ratings
 spec:
   ports:
-  - port: 9080
+  - port: 8101
     name: http
     targetPort: 8101
+  - port: 8111
+    name: sidecar
+    targetPort: 8111
   selector:
     app: ratings
 ---
@@ -160,6 +168,8 @@ spec:
       labels:
         app: ratings
         version: v1
+      annotations:
+        "flomesh.io/inject": "true"
     spec:
       containers:
       - name: ratings
@@ -185,9 +195,12 @@ metadata:
     service: reviews
 spec:
   ports:
-  - port: 9080
+  - port: 8102
     name: http
     targetPort: 8102
+  - port: 8112
+    name: sidecar
+    targetPort: 8112
   selector:
     app: reviews
 ---
@@ -209,6 +222,8 @@ spec:
       labels:
         app: reviews
         version: v1
+      annotations:
+        "flomesh.io/inject": "true"
     spec:
       containers:
       - name: reviews
@@ -239,6 +254,9 @@ spec:
   - port: 9080
     name: http
     targetPort: 9080
+  - port: 9090
+    name: sidecar
+    targetPort: 9090
   selector:
     app: productpage
   type: LoadBalancer
@@ -261,6 +279,8 @@ spec:
       labels:
         app: productpage
         version: v1
+      annotations:
+        "flomesh.io/inject": "true"
     spec:
       containers:
       - name: productpage
