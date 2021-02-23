@@ -27,7 +27,7 @@ spec:
           script
             source = dispatch.js
           # Forwards to pipeline 'sample-svc' or '404'
-          proxy-tcp
+          proxy
             to = ${pipeline}
           decode-http-response
             prefix = out
