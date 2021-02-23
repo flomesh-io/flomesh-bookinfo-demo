@@ -14,12 +14,28 @@ spec:
           decode-http-request
             prefix = in
           print
+          # Generate a unique ID for every message
+          script
+            source = tag.js
+          # Clone and send out request messages
+          clone
+            to = log-request
+          # Proxy to upstreams
+          encode-http-request
+            prefix = in
           # This script controls variables ${pipeline} and ${target}
           script
             source = dispatch.js
           # Forwards to pipeline 'sample-svc' or '404'
-          proxy
+          proxy-tcp
             to = ${pipeline}
+          decode-http-response
+            prefix = out
+          # Clone and send out response messages
+          clone
+            to = log-response
+          encode-http-response
+            prefix = out
 
         #
         # When route is found, forwards to ${target}
@@ -40,6 +56,47 @@ spec:
             prefix = in
             status = Not Found
             status_code = 404
+
+        #
+        # Log requests
+        #
+        pipeline log-request
+          # Format log message
+          script
+            source = format-request.js
+          # Send to shared connection
+          clone
+            to = log
+            session = log
+
+        #
+        # Log response
+        #
+        pipeline log-response
+          # Format log message
+          script
+            source = format-response.js
+          # Send to shared connection
+          clone
+            to = log
+            session = log
+
+
+        #
+        # Shared logging connection
+        #
+        pipeline log
+          encode-http-request
+            method = POST
+            path = /?query=insert%20into%20log(message)%20format%20JSONAsString
+            headers.Content-Type = application/json
+          script
+            source = log-to-clickhouse.js
+          proxy-tcp
+            to = ${target}
+            retry_count = -1
+            retry_delay = 5s
+            buffer_limit = 256M
 
     dispatch.js: |
       import ROUTES from './routes.js';
@@ -69,6 +126,21 @@ spec:
       export default {
         '/': 'samples-bookinfo-productpage:9090'
       }
+    log-to-clickhouse.js: |
+      export default (output, context) => (
+        input => {
+          // Set target for each session
+          if (input instanceof Event &&
+              input.type === 'sessionstart'
+          ) {
+            // ClickHouse is encapsulated as a K8s serveice
+            context.set('target', 'samples-clickhouse:8123');
+          }
+
+          // Pass down everything
+          output(input);
+        }
+      );
     format-request.js: |
       export default (output, context) => {
         let buf = null;
