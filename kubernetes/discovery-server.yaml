@@ -39,6 +39,7 @@ spec:
         version: v1
       annotations:
         "flomesh.io/inject": "true"
+        "flomesh.io/inject-cfg-type": "log-to-clickhouse"
     spec:
       containers:
         - name: discovery

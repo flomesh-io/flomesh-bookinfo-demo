@@ -66,6 +66,7 @@ spec:
         version: v1
       annotations:
         "flomesh.io/inject": "true"
+        "flomesh.io/inject-cfg-type": "log-to-clickhouse"
     spec:
       containers:
         - name: gateway
@@ -121,6 +122,7 @@ spec:
         version: v1
       annotations:
         "flomesh.io/inject": "true"
+        "flomesh.io/inject-cfg-type": "log-to-clickhouse"
     spec:
       containers:
       - name: details
@@ -175,6 +177,7 @@ spec:
         version: v1
       annotations:
         "flomesh.io/inject": "true"
+        "flomesh.io/inject-cfg-type": "log-to-clickhouse"
     spec:
       containers:
       - name: ratings
@@ -229,6 +232,7 @@ spec:
         version: v1
       annotations:
         "flomesh.io/inject": "true"
+        "flomesh.io/inject-cfg-type": "log-to-clickhouse"
     spec:
       containers:
       - name: reviews
@@ -286,6 +290,7 @@ spec:
         version: v1
       annotations:
         "flomesh.io/inject": "true"
+        "flomesh.io/inject-cfg-type": "log-to-clickhouse"
     spec:
       containers:
       - name: productpage
