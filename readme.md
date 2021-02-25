@@ -82,7 +82,7 @@ curl -X POST http://localhost:10000/bookinfo-ratings/ratings \
 	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","rating":3}' 
 ~~~~~  
 
-or, create ratings in k8s, replace the ***ingress-ip*** with a real IP address:
+or, create ratings in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
 ~~~~~bash
 curl -X POST http://ingress-ip:8080/bookinfo-ratings/ratings \
 	-H "Content-Type: application/json" \
@@ -99,7 +99,7 @@ Through API Gateway:
 curl http://localhost:10000/bookinfo-ratings/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
 ~~~~~
 
-or, query ratings by product_id in kubernetes, replace the ***ingress-ip*** with a real IP address:
+or, query ratings by product_id in kubernetes, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
 ~~~~~bash
 curl http://ingress-ip:8080/bookinfo-ratings/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
 ~~~~~
@@ -131,7 +131,7 @@ curl -X POST http://localhost:10000/bookinfo-reviews/reviews \
 	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","review":"This was OK.","rating":3}'
 ~~~~~
 
-or, create review in k8s, replace the ***ingress-ip*** with a real IP address:
+or, create review in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
 ~~~~~bash
 curl -X POST http://ingress-ip:8080/bookinfo-reviews/reviews \
 	-H "Content-Type: application/json" \
@@ -148,7 +148,7 @@ Through API Gateway:
 curl http://localhost:10000/bookinfo-reviews/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
 ~~~~~
 
-or, query review by product_id in k8s, replace the ***ingress-ip*** with a real IP address:
+or, query review by product_id in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
 ~~~~~bash
 curl http://ingress-ip:8080/bookinfo-reviews/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
 ~~~~~
@@ -171,7 +171,7 @@ Through API Gateway:
 curl http://localhost:10000/bookinfo-details/details/1234567890
 ~~~~~
 
-or, query detail by isbn in k8s, replace the ***ingress-ip*** with a real IP address:
+or, query detail by isbn in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
 ~~~~~bash
 curl http://ingress-ip:8080/bookinfo-details/details/1234567890
 ~~~~~
