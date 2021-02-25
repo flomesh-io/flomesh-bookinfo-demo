@@ -13,7 +13,14 @@ Then run the following command to build docker images:
 ./docker-build-push.sh 
 ```
 
+
+
+# Deploy to Kubernetes/K3s & Test
+
+## Deploy
+
 As the services has startup dependencies, you need to deploy it one by one following the strict sequence. Before starting, check the **Endpoints** section of **clickhouse.yaml**
+
 ```yaml
 apiVersion: v1
 kind: Endpoints
@@ -54,7 +61,49 @@ kubectl apply -f ingress.yaml
 
 Take a note of your **Ingress public IP**, and the Ingress listens on port 8080 by default.
 
-# Run
+## Test rating service:
+
+create ratings in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
+
+~~~~~bash
+curl -X POST http://ingress-ip:8080/bookinfo-ratings/ratings \
+	-H "Content-Type: application/json" \
+	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","rating":3}' 
+~~~~~
+
+query ratings by product_id in kubernetes, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
+
+~~~~~bash
+curl http://ingress-ip:8080/bookinfo-ratings/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
+~~~~~
+
+## Test review service:
+
+create review in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
+
+~~~~~bash
+curl -X POST http://ingress-ip:8080/bookinfo-reviews/reviews \
+	-H "Content-Type: application/json" \
+	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","review":"This was OK.","rating":3}'
+~~~~~
+
+query review by product_id in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
+
+~~~~~bash
+curl http://ingress-ip:8080/bookinfo-reviews/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
+~~~~~
+
+## Test detail service
+
+ query detail by isbn in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
+
+~~~~~bash
+curl http://ingress-ip:8080/bookinfo-details/details/1234567890
+~~~~~
+
+
+
+# Run locally:
 
 ## Start Eureka service:
 In the project root folder:
@@ -97,13 +146,6 @@ Through API Gateway:
 curl -X POST http://localhost:10000/bookinfo-ratings/ratings \
 	-H "Content-Type: application/json" \
 	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","rating":3}' 
-~~~~~  
-
-or, create ratings in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
-~~~~~bash
-curl -X POST http://ingress-ip:8080/bookinfo-ratings/ratings \
-	-H "Content-Type: application/json" \
-	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","rating":3}' 
 ~~~~~
 
 query ratings by product_id in vm:
@@ -114,11 +156,6 @@ curl http://localhost:8101/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
 Through API Gateway:
 ~~~~~bash
 curl http://localhost:10000/bookinfo-ratings/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
-~~~~~
-
-or, query ratings by product_id in kubernetes, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
-~~~~~bash
-curl http://ingress-ip:8080/bookinfo-ratings/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
 ~~~~~
 
 ## Start review service:
@@ -144,13 +181,6 @@ curl -X POST http://localhost:10000/bookinfo-reviews/reviews \
 	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","review":"This was OK.","rating":3}'
 ~~~~~
 
-or, create review in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
-~~~~~bash
-curl -X POST http://ingress-ip:8080/bookinfo-reviews/reviews \
-	-H "Content-Type: application/json" \
-	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","review":"This was OK.","rating":3}'
-~~~~~
-
 query review by product_id in VM:
 ~~~~~bash
 curl http://localhost:8102/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
@@ -161,12 +191,8 @@ Through API Gateway:
 curl http://localhost:10000/bookinfo-reviews/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
 ~~~~~
 
-or, query review by product_id in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
-~~~~~bash
-curl http://ingress-ip:8080/bookinfo-reviews/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
-~~~~~
-
 ## Start detail service:
+
 In the project root folder:
 ~~~~~bash
 cd details
@@ -183,10 +209,3 @@ Through API Gateway:
 ~~~~~bash
 curl http://localhost:10000/bookinfo-details/details/1234567890
 ~~~~~
-
-or, query detail by isbn in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
-~~~~~bash
-curl http://ingress-ip:8080/bookinfo-details/details/1234567890
-~~~~~
-
-
