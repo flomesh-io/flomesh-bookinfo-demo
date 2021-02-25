@@ -13,8 +13,7 @@ Then run the following command to build docker images:
 ./docker-build-push.sh 
 ```
 
-As the services has startup dependencies, you need to deploy it one by one following the strict sequence:
-Before starting, check the **Endpoint** section of **clickhouse.yaml**
+As the services has startup dependencies, you need to deploy it one by one following the strict sequence. Before starting, check the **Endpoints** section of **clickhouse.yaml**
 ```yaml
 apiVersion: v1
 kind: Endpoints
