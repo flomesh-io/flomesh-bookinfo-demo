@@ -37,9 +37,32 @@ Take a note of your **Ingress public IP**, and the Ingress listens on port 8080 
 
 # Run
 
+## start Eureka service:
+In the project root folder:
+```shell
+cd discovery-server
+mvn spring-boot:run
+```
+
+## start Config service:
+In the project root folder:
+```shell
+cd config-service
+mvn spring-boot:run
+```
+
+## start API Gateway:
+In the project root folder:
+```shell
+cd api-gateway
+mvn spring-boot:run -Dspring.profiles.active=local
+```
+
 ## start rating service: 
+In the project root folder:
 ~~~~~bash
-java -jar bookinfo-ratings-1.0.0-SNAPSHOT.jar --opentracing.jaeger.http-sender.url=http://jaeger-collector.default.svc:14268/api/traces
+cd ratings
+mvn spring-boot:run
 ~~~~~
 In VM environment, it will listen on localhost:8101. 
 
@@ -76,8 +99,10 @@ curl http://ingress-ip:8080/bookinfo-ratings/ratings/a071c269-369c-4f79-be03-6a4
 ~~~~~
 
 ## start review service:
+In the project root folder:
 ~~~~~bash
-java -jar bookinfo-reviews-1.0.0-SNAPSHOT.jar --bookinfo-ratings.url=localhost:8101 --opentracing.jaeger.http-sender.url=http://jaeger-collector.default.svc:14268/api/traces
+cd reviews
+mvn spring-boot:run
 ~~~~~
 It will listen on localhost:8102 and will call localhost:8101 for rating query in vm environment.
 
@@ -117,8 +142,10 @@ curl http://ingress-ip:8080/bookinfo-reviews/reviews/a071c269-369c-4f79-be03-6a4
 ~~~~~
 
 ## start detail service:
+In the project root folder:
 ~~~~~bash
-java -jar bookinfo-details-1.0.0-SNAPSHOT.jar --opentracing.jaeger.http-sender.url=http://jaeger-collector.default.svc:14268/api/traces
+cd details
+mvn spring-boot:run
 ~~~~~
 It will listen on localhost:8103
 
