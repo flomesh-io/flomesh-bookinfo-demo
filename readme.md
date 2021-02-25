@@ -129,10 +129,6 @@ mvn spring-boot:run
 ~~~~~
 It will listen on localhost:8102 and will call localhost:8101 for rating query in vm environment.
 
-or, start review service in k8s:
-~~~~~bash
-java -jar bookinfo-reviews-1.0.0-SNAPSHOT.jar --bookinfo-ratings.url=bookinfo-ratings.default.svc:9080 --opentracing.jaeger.http-sender.url=http://jaeger-collector.default.svc:14268/api/traces
-~~~~~
 
 create review in VM:
 ~~~~~bash
