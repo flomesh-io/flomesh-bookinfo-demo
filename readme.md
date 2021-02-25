@@ -1,6 +1,6 @@
 # Build
 
-* For config-service, discovery-server, ratings, reviews, details, use mvn to run that
+* For config-service, discovery-server, api-gateway, ratings, reviews, details, use mvn to build that
 ~~~~~bash
 mvn clean package
 ~~~~~
