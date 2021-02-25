@@ -39,7 +39,7 @@ spec:
       containers:
         - name: config
           image: docker.io/flomesh/samples-config-service:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8888
           env:
