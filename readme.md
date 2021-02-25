@@ -37,28 +37,28 @@ Take a note of your **Ingress public IP**, and the Ingress listens on port 8080 
 
 # Run
 
-## start Eureka service:
+## Start Eureka service:
 In the project root folder:
 ```shell
 cd discovery-server
 mvn spring-boot:run
 ```
 
-## start Config service:
+## Start Config service:
 In the project root folder:
 ```shell
 cd config-service
 mvn spring-boot:run
 ```
 
-## start API Gateway:
+## Start API Gateway:
 In the project root folder:
 ```shell
 cd api-gateway
 mvn spring-boot:run -Dspring.profiles.active=local
 ```
 
-## start rating service: 
+## Start rating service: 
 In the project root folder:
 ~~~~~bash
 cd ratings
@@ -98,7 +98,7 @@ or, query ratings by product_id in kubernetes, replace the ***ingress-ip*** with
 curl http://ingress-ip:8080/bookinfo-ratings/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
 ~~~~~
 
-## start review service:
+## Start review service:
 In the project root folder:
 ~~~~~bash
 cd reviews
@@ -141,7 +141,7 @@ or, query review by product_id in k8s, replace the ***ingress-ip*** with a real 
 curl http://ingress-ip:8080/bookinfo-reviews/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
 ~~~~~
 
-## start detail service:
+## Start detail service:
 In the project root folder:
 ~~~~~bash
 cd details
