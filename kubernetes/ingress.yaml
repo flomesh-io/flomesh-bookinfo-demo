@@ -6,11 +6,11 @@ spec:
   mode: Ingress
   tplMode: Raw
   image: flomesh/pipy:latest
-  port: 6000
+  port: 8080
   config:
     config.cfg: |
       pipy
-        pipeline :6000
+        pipeline :8080
           decode-http-request
             prefix = in
           print
