@@ -34,7 +34,7 @@ metadata:
   name: samples-api-gateway
   labels:
     app: gateway
-    service: gateway
+    service: samples-api-gateway
 spec:
   ports:
     - port: 10000
@@ -64,6 +64,7 @@ spec:
       labels:
         app: gateway
         version: v1
+        service: samples-api-gateway
       annotations:
         "flomesh.io/inject": "true"
         "flomesh.io/inject-cfg-type": "log-to-clickhouse"
@@ -92,7 +93,7 @@ metadata:
   name: samples-bookinfo-details
   labels:
     app: details
-    service: details
+    service: samples-bookinfo-details
 spec:
   ports:
   - port: 8103
@@ -122,6 +123,7 @@ spec:
       labels:
         app: details
         version: v1
+        service: samples-bookinfo-details
       annotations:
         "flomesh.io/inject": "true"
         "flomesh.io/inject-cfg-type": "log-to-clickhouse"
@@ -149,7 +151,7 @@ metadata:
   name: samples-bookinfo-ratings
   labels:
     app: ratings
-    service: ratings
+    service: samples-bookinfo-ratings
 spec:
   ports:
   - port: 8101
@@ -179,6 +181,7 @@ spec:
       labels:
         app: ratings
         version: v1
+        service: samples-bookinfo-ratings
       annotations:
         "flomesh.io/inject": "true"
         "flomesh.io/inject-cfg-type": "log-to-clickhouse"
@@ -206,7 +209,7 @@ metadata:
   name: samples-bookinfo-reviews
   labels:
     app: reviews
-    service: reviews
+    service: samples-bookinfo-reviews
 spec:
   ports:
   - port: 8102
@@ -236,6 +239,7 @@ spec:
       labels:
         app: reviews
         version: v1
+        service: samples-bookinfo-reviews
       annotations:
         "flomesh.io/inject": "true"
         "flomesh.io/inject-cfg-type": "log-to-clickhouse"
@@ -265,7 +269,7 @@ metadata:
   name: samples-bookinfo-productpage
   labels:
     app: productpage
-    service: productpage
+    service: samples-bookinfo-productpage
 spec:
   ports:
   - port: 9080
@@ -296,6 +300,7 @@ spec:
       labels:
         app: productpage
         version: v1
+        service: samples-bookinfo-productpage
       annotations:
         "flomesh.io/inject": "true"
         "flomesh.io/inject-cfg-type": "log-to-clickhouse"

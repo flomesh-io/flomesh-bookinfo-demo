@@ -7,7 +7,7 @@ metadata:
   name: samples-config-service
   labels:
     app: config
-    service: config
+    service: samples-config-service
 spec:
   ports:
     - port: 8888
@@ -34,6 +34,7 @@ spec:
       labels:
         app: config
         version: v1
+        service: samples-config-service
     spec:
       containers:
         - name: config
