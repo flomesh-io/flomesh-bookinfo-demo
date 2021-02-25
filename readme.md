@@ -4,7 +4,7 @@
 ~~~~~bash
 mvn clean package
 ~~~~~
-It will generated springboot fat *jar* file in each dir targets subdir
+It will generate Spring Boot fat *jar* file in each dir targets subdir
 
 * For productpage, it's written in python, no need to build
 
