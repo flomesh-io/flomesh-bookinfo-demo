@@ -24,7 +24,7 @@ metadata:
     service: clickhouse
 subsets:
   - addresses:
-    - ip: 47.103.37.3
+    - ip: 127.0.0.1
     ports:
     - name: chdb
       port: 8123
