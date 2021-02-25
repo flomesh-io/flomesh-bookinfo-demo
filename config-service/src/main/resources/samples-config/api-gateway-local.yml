@@ -1,0 +1,11 @@
+zuul:
+  routes:
+    details:
+      path: /bookinfo-details/**
+      url: http://localhost:8103
+    reviews:
+      path: /bookinfo-reviews/**
+      url: http://localhost:8102
+    ratings:
+      path: /bookinfo-ratings/**
+      url: http://localhost:8101
