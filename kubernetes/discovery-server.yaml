@@ -50,3 +50,5 @@ spec:
           env:
             - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
               value: samples-discovery-server
+            - name: K8S_SERVICE_NAME
+              value: samples-discovery-server

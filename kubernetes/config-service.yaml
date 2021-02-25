@@ -48,3 +48,5 @@ spec:
               value: "8771"
             - name: K8S_SAMPLES_BOOKINFO_RATINGS_HOSTNAME
               value: samples-bookinfo-ratings
+            - name: K8S_SERVICE_NAME
+              value: samples-config-service

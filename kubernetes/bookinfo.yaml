@@ -79,6 +79,8 @@ spec:
               value: samples-discovery-server
             - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
               value: "8771"
+            - name: K8S_SERVICE_NAME
+              value: samples-api-gateway
 ---
 
 ##################################################################################################
@@ -135,6 +137,8 @@ spec:
             value: samples-discovery-server
           - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
             value: "8771"
+          - name: K8S_SERVICE_NAME
+            value: samples-bookinfo-details
 ---
 ##################################################################################################
 # Ratings service
@@ -190,6 +194,8 @@ spec:
             value: samples-discovery-server
           - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
             value: "8771"
+          - name: K8S_SERVICE_NAME
+            value: samples-bookinfo-ratings
 ---
 ##################################################################################################
 # Reviews service
@@ -247,6 +253,8 @@ spec:
             value: "8771"
           - name: K8S_SAMPLES_BOOKINFO_RATINGS_HOSTNAME
             value: samples-bookinfo-ratings
+          - name: K8S_SERVICE_NAME
+            value: samples-bookinfo-reviews
 ---
 ##################################################################################################
 # Productpage services
@@ -303,6 +311,8 @@ spec:
           value: samples-bookinfo-ratings
         - name: REVIEWS_HOSTNAME
           value: samples-bookinfo-reviews
+        - name: K8S_SERVICE_NAME
+          value: samples-bookinfo-productpage
         image: docker.io/flomesh/samples-bookinfo-productpage:latest
         imagePullPolicy: IfNotPresent
         ports:
