@@ -41,8 +41,6 @@ spec:
         # When route is found, forwards to ${target}
         #
         pipeline sample-svc
-          encode-http-request
-            prefix = in
           proxy-tcp
             to = ${target}
 
