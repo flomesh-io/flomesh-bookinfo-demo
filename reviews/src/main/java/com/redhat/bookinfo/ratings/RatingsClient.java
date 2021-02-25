@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @FeignClient(
         name = "bookinfo-ratings",
-        // url = "${bookinfo-ratings.url}",
+        url = "${bookinfo-ratings.url}",
         fallback = RatingsClient.RatingsClientFallback.class
 )
 public interface RatingsClient {
