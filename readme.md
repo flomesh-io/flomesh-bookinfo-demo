@@ -14,7 +14,25 @@ Then run the following command to build docker images:
 ```
 
 As the services has startup dependencies, you need to deploy it one by one following the strict sequence:
+Before starting, check the **Endpoint** section of **clickhouse.yaml**
+```yaml
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: samples-clickhouse
+  labels:
+    app: clickhouse
+    service: clickhouse
+subsets:
+  - addresses:
+    - ip: 47.103.37.3
+    ports:
+    - name: chdb
+      port: 8123
+      protocol: TCP
+```
 
+Change the IP address and port according to your environment, then save and go to deploy:
 ```shell
 kubectl apply -f discovery-server.yaml
 kubectl apply -f clickhouse.yaml
