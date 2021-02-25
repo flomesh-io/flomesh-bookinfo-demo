@@ -2,6 +2,9 @@ apiVersion: flomesh.io/v1
 kind: Proxy
 metadata:
   name: samples-pipy-ingress
+  labels:
+    app: ingress
+    service: samples-pipy-ingress
 spec:
   mode: Ingress
   tplMode: Raw
