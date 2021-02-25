@@ -15,7 +15,10 @@ Then run the following command to build docker images:
 
 As the services has startup dependencies, you need to deploy it one by one following the strict sequence:
 
-`kubectl apply -f discovery-server.yaml`
+```shell
+kubectl apply -f discovery-server.yaml
+kubectl apply -f clickhouse.yaml
+```
 
 Then check the running status and logs to ensure the discovery server starts successfully and is UP.
 
@@ -23,9 +26,14 @@ Then check the running status and logs to ensure the discovery server starts suc
 
 Then check the running status and logs to ensure the config server starts successfully and is UP.
 
-`kubectl apply -f bookinfo.yaml`
+After that deploy the sample services and Ingress.
 
-To deploy the sample services.
+```shell
+kubectl apply -f bookinfo.yaml
+kubectl apply -f ingress.yaml
+```
+
+Take a note of your **Ingress public IP**, and the Ingress listens on port 8080 by default.
 
 # Run
 
@@ -49,19 +57,22 @@ curl -X POST http://localhost:10000/bookinfo-ratings/ratings \
 	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","rating":3}' 
 ~~~~~  
 
-or, create ratings in k8s:
+or, create ratings in k8s, replace the ***ingress-ip*** with a real IP address:
 ~~~~~bash
-curl -d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","rating":3}' -H "Content-Type: application/json" -X POST http://bookinfo-ratings.default.svc:9080/ratings
+curl -X POST http://ingress-ip:8080/bookinfo-ratings/ratings \
+	-H "Content-Type: application/json" \
+	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","rating":3}' 
 ~~~~~
 
 query ratings by product_id in vm:
 ~~~~~bash
 curl http://localhost:8101/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
+curl http://localhost:10000/bookinfo-ratings/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
 ~~~~~
 
-or, query ratings by product_id in kubernetes:
+or, query ratings by product_id in kubernetes, replace the ***ingress-ip*** with a real IP address:
 ~~~~~bash
-curl http://bookinfo-ratings.default.svc:9080/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
+curl http://ingress-ip:8080/bookinfo-ratings/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
 ~~~~~
 
 ## start review service:
@@ -75,24 +86,34 @@ or, start review service in k8s:
 java -jar bookinfo-reviews-1.0.0-SNAPSHOT.jar --bookinfo-ratings.url=bookinfo-ratings.default.svc:9080 --opentracing.jaeger.http-sender.url=http://jaeger-collector.default.svc:14268/api/traces
 ~~~~~
 
-create review:
+create review in VM:
 ~~~~~bash
-curl -d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","review":"This was OK.","rating":3}' -H "Content-Type: application/json" -X POST http://localhost:8102/reviews
+curl -X POST http://localhost:8102/reviews \
+	-H "Content-Type: application/json" \
+	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","review":"This was OK.","rating":3}' 
+	
+curl -X POST http://localhost:10000/bookinfo-reviews/reviews \
+	-H "Content-Type: application/json" \
+	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","review":"This was OK.","rating":3}'
 ~~~~~
 
-or, create review in k8s:
+or, create review in k8s, replace the ***ingress-ip*** with a real IP address:
 ~~~~~bash
-curl -d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","review":"This was OK.","rating":3}' -H "Content-Type: application/json" -X POST http://bookinfo-reviews.default.svc:9080/reviews
+curl -X POST http://ingress-ip:8080/bookinfo-reviews/reviews \
+	-H "Content-Type: application/json" \
+	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","review":"This was OK.","rating":3}'
 ~~~~~
 
-query review by product_id:
+query review by product_id in VM:
 ~~~~~bash
 curl http://localhost:8102/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
+
+curl http://localhost:10000/bookinfo-reviews/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
 ~~~~~
 
-or, query review by product_id in k8s:
+or, query review by product_id in k8s, replace the ***ingress-ip*** with a real IP address:
 ~~~~~bash
-curl http://bookinfo-reviews.default.svc:9080/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
+curl http://ingress-ip:8080/bookinfo-reviews/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
 ~~~~~
 
 ## start detail service:
@@ -104,11 +125,13 @@ It will listen on localhost:8103
 query detail by isbn:
 ~~~~~bash
 curl http://localhost:8103/details/1234567890
+
+curl http://localhost:10000/bookinfo-details/details/1234567890
 ~~~~~
 
-or, query detail by isbn in k8s:
+or, query detail by isbn in k8s, replace the ***ingress-ip*** with a real IP address:
 ~~~~~bash
-curl http://bookinfo-details.default.svc:9080/details/1234567890
+curl http://ingress-ip:8080/bookinfo-details/details/1234567890
 ~~~~~
 
 
