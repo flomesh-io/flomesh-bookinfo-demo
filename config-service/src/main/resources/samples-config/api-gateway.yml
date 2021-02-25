@@ -32,3 +32,9 @@ hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds: 35000
 ribbon:
   ConnectTimeout: 3000
   ReadTimeout: 5000
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: TRACE
+    org.springframework.http: TRACE
