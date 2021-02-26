@@ -17,7 +17,6 @@ zuul:
     details:
       path: /bookinfo-details/**
       url: http://samples-bookinfo-details:8113
-#      url: http://localhost:8103
     reviews:
       path: /bookinfo-reviews/**
       url: http://samples-bookinfo-reviews:8112
