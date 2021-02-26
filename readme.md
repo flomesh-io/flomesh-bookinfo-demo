@@ -1,3 +1,6 @@
+# Topology
+![Topology](docs/images/bookinfo-samples-topology.png)
+
 # Build
 
 * For config-service, discovery-server, api-gateway, ratings, reviews, details, use mvn to build that
