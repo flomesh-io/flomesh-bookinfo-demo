@@ -38,6 +38,7 @@ spec:
         app: discovery
         version: v1
         service: samples-discovery-server
+        sys: bookinfo-samples
       annotations:
         "flomesh.io/inject": "true"
         "flomesh.io/inject-cfg-type": "log-to-clickhouse"

@@ -65,6 +65,7 @@ spec:
         app: gateway
         version: v1
         service: samples-api-gateway
+        sys: bookinfo-samples
       annotations:
         "flomesh.io/inject": "true"
         "flomesh.io/inject-cfg-type": "log-to-clickhouse"
@@ -124,6 +125,7 @@ spec:
         app: details
         version: v1
         service: samples-bookinfo-details
+        sys: bookinfo-samples
       annotations:
         "flomesh.io/inject": "true"
         "flomesh.io/inject-cfg-type": "log-to-clickhouse"
@@ -182,6 +184,7 @@ spec:
         app: ratings
         version: v1
         service: samples-bookinfo-ratings
+        sys: bookinfo-samples
       annotations:
         "flomesh.io/inject": "true"
         "flomesh.io/inject-cfg-type": "log-to-clickhouse"
@@ -240,6 +243,7 @@ spec:
         app: reviews
         version: v1
         service: samples-bookinfo-reviews
+        sys: bookinfo-samples
       annotations:
         "flomesh.io/inject": "true"
         "flomesh.io/inject-cfg-type": "log-to-clickhouse"
@@ -303,6 +307,7 @@ spec:
         app: productpage
         version: v1
         service: samples-bookinfo-productpage
+        sys: bookinfo-samples
       annotations:
         "flomesh.io/inject": "true"
         "flomesh.io/inject-cfg-type": "log-to-clickhouse"
