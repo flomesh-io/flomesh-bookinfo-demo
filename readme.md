@@ -21,6 +21,14 @@ Then run the following command to build docker images:
 # Deploy to Kubernetes/K3s & Test
 
 ## Deploy
+All the deployment YAMLs are in the [kubernetes](kubernetes/) folder.
+
+
+First of All, create a ProxyProfile for the demo. A ProxyProfile defines the configuration and route rules for the PIPY sidecar, please see [proxy-profile.yaml](kubernetes/proxy-profile.yaml) for more details.
+```shell
+kubectl apply -f proxy-profile.yaml
+```
+
 
 As the services has startup dependencies, you need to deploy it one by one following the strict sequence. Before starting, check the **Endpoints** section of **clickhouse.yaml**
 
@@ -34,7 +42,7 @@ metadata:
     service: clickhouse
 subsets:
   - addresses:
-    - ip: 127.0.0.1
+    - ip: 172.19.182.213
     ports:
     - name: chdb
       port: 8123
