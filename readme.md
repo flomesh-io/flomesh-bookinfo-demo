@@ -21,10 +21,10 @@ Then run the following command to build docker images:
 # Deploy to Kubernetes/K3s & Test
 
 ## Deploy
-All the deployment YAMLs are in the [kubernetes](kubernetes/) folder.
+All YAMLs are in the [kubernetes](kubernetes/) folder.
 
 
-First of All, create a ProxyProfile for the demo. A ProxyProfile defines the configuration and route rules for the PIPY sidecar, please see [proxy-profile.yaml](kubernetes/proxy-profile.yaml) for more details.
+**First of All**, create a ProxyProfile for the demo. A ProxyProfile defines the configuration and routing rules for the PIPY sidecar, please see [proxy-profile.yaml](kubernetes/proxy-profile.yaml) for more details.
 ```shell
 kubectl apply -f proxy-profile.yaml
 ```
