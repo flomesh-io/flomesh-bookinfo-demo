@@ -85,6 +85,14 @@ All YAMLs are in the [kubernetes](kubernetes/) folder.
 kubectl apply -f proxy-profile.yaml
 ```
 
+Check if it's created successfully:
+```shell
+root@k3s:~/flomesh-bookinfo-demo/kubernetes# kubectl get pf
+NAME                         AGE
+proxy-profile-002-bookinfo   32m
+```
+
+
 **Second**, you need to have ClickHouse installed somewhere, and create the log table by [init.sql](scripts/init.sql) in default schema:
 ```SQL
 CREATE TABLE default.log
@@ -170,6 +178,13 @@ Take a note of your **Ingress Host IP**, and remember the Ingress listens on por
 root@k3s:~# kubectl get nodes -o wide
 NAME   STATUS   ROLES    AGE   VERSION        INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION     CONTAINER-RUNTIME
 k3s    Ready    master   18h   v1.19.7+k3s1   10.0.2.15     <none>        Ubuntu 20.04.2 LTS   5.4.0-65-generic   containerd://1.4.3-k3s1
+```
+
+If you're not sure about the Ingress port, you can check it by `kubectl get px`:
+```shell
+root@k3s~/flomesh-bookinfo-demo/kubernetes# kubectl get px
+NAME                   MODE      PORT   IMAGE                 AGE
+samples-pipy-ingress   Ingress   8080   flomesh/pipy:latest   13m
 ```
 
 ## Test rating service:
