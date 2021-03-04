@@ -85,6 +85,19 @@ All YAMLs are in the [kubernetes](kubernetes/) folder.
 kubectl apply -f proxy-profile.yaml
 ```
 
+**Second**, you need to have ClickHouse installed somewhere, and create the log table in default schema:
+```SQL
+CREATE TABLE default.log
+(
+`uuid` String DEFAULT JSONExtractString(message, 'uuid'),
+`type` String DEFAULT JSONExtractString(message, 'type'),
+`message` String,
+`timestamp` DateTime DEFAULT now()
+)
+ENGINE = MergeTree
+ORDER BY uuid
+SETTINGS index_granularity = 8192;
+```
 
 As the services has startup dependencies, you need to deploy it one by one following the strict sequence. Before starting, check the **Endpoints** section of **clickhouse.yaml**
 
@@ -131,7 +144,7 @@ default          samples-discovery-server-v1-56c79689c6-7n7kk     2/2     Runnin
 default          samples-config-service-v1-65ff699755-2fckg       1/1     Running     0          31s
 ```
 
-After that deploy the sample services and Ingress.
+After that deploy the API gateway, sample services and Ingress.
 
 ```shell
 kubectl apply -f bookinfo.yaml
