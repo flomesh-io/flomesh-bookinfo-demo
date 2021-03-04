@@ -4,17 +4,17 @@
 # Build
 
 * For config-service, discovery-server, api-gateway, ratings, reviews, details, use mvn to build that
-~~~~~bash
-mvn clean package
-~~~~~
-It will generate Spring Boot fat *jar* file in each dir targets subdir
+	```shell
+	mvn clean package
+	```
+	It will generate Spring Boot fat *jar* file in each dir targets subdir
 
 * For productpage, it's written in python, no need to build
 
-Then run the following command to build docker images:
-```bash
-./docker-build-push.sh 
-```
+	Then run the following command to build docker images:
+	```shell
+	./docker-build-push.sh 
+	```
 
 
 
@@ -45,10 +45,10 @@ Check out [pipy-operator](https://github.com/flomesh-io/pipy-operator) code, ent
  	You should see the output like this：
 	```shell
 	[root@crd pipy-operator]# kubectl apply -f artifact/pipy-operator.yaml
+	namespace/flomesh-system created
 	Warning: apiextensions.k8s.io/v1beta1 CustomResourceDefinition is deprecated in v1.16+, unavailable in v1.22+; use apiextensions.k8s.io/v1 CustomResourceDefinition
 	customresourcedefinition.apiextensions.k8s.io/proxies.flomesh.io created
-	namespace/flomesh-system created
-	customresourcedefinition.apiextensions.k8s.io/proxies.flomesh.io configured
+	customresourcedefinition.apiextensions.k8s.io/proxyprofiles.flomesh.io created
 	role.rbac.authorization.k8s.io/flomesh-leader-election-role created
 	clusterrole.rbac.authorization.k8s.io/flomesh-manager-role created
 	clusterrole.rbac.authorization.k8s.io/flomesh-proxy-role created
@@ -58,12 +58,15 @@ Check out [pipy-operator](https://github.com/flomesh-io/pipy-operator) code, ent
 	clusterrolebinding.rbac.authorization.k8s.io/flomesh-manager-rolebinding created
 	clusterrolebinding.rbac.authorization.k8s.io/flomesh-proxy-rolebinding created
 	service/flomesh-controller-manager-metrics-service created
+	service/flomesh-pipy-sidecar-injector-service created
 	service/flomesh-webhook-service created
 	deployment.apps/flomesh-controller-manager created
+	deployment.apps/flomesh-pipy-sidecar-injector created
 	certificate.cert-manager.io/flomesh-serving-cert created
 	issuer.cert-manager.io/flomesh-selfsigned-issuer created
 	Warning: admissionregistration.k8s.io/v1beta1 MutatingWebhookConfiguration is deprecated in v1.16+, unavailable in v1.22+; use admissionregistration.k8s.io/v1 MutatingWebhookConfiguration
 	mutatingwebhookconfiguration.admissionregistration.k8s.io/flomesh-mutating-webhook-configuration created
+	mutatingwebhookconfiguration.admissionregistration.k8s.io/flomesh-sidecar-injector-webhook-configuration created
 	Warning: admissionregistration.k8s.io/v1beta1 ValidatingWebhookConfiguration is deprecated in v1.16+, unavailable in v1.22+; use admissionregistration.k8s.io/v1 ValidatingWebhookConfiguration
 	validatingwebhookconfiguration.admissionregistration.k8s.io/flomesh-validating-webhook-configuration created
 	```
@@ -89,50 +92,50 @@ Check out [pipy-operator](https://github.com/flomesh-io/pipy-operator) code, ent
 All YAMLs are in the [kubernetes](kubernetes/) folder.
 
 **First of All**, create a ProxyProfile for the demo. A ProxyProfile is a CRD which defines the configuration and routing rules for the PIPY sidecar, please see [proxy-profile.yaml](kubernetes/proxy-profile.yaml) for more details.
-```shell
-kubectl apply -f proxy-profile.yaml
-```
+	```shell
+	kubectl apply -f proxy-profile.yaml
+	```
 
 
 As the services has startup dependencies, you need to deploy it one by one following the strict sequence. Before starting, check the **Endpoints** section of **clickhouse.yaml**
 
-```yaml
-apiVersion: v1
-kind: Endpoints
-metadata:
-  name: samples-clickhouse
-  labels:
-    app: clickhouse
-    service: clickhouse
-subsets:
-  - addresses:
-    - ip: 172.19.182.213
-    ports:
-    - name: chdb
-      port: 8123
-      protocol: TCP
-```
+	```yaml
+	apiVersion: v1
+	kind: Endpoints
+	metadata:
+	  name: samples-clickhouse
+	  labels:
+	    app: clickhouse
+	    service: clickhouse
+	subsets:
+	  - addresses:
+	    - ip: 172.19.182.213
+	    ports:
+	    - name: chdb
+	      port: 8123
+	      protocol: TCP
+	```
 
 Change the IP address and port according to your environment, then save and go to deploy:
-```shell
-kubectl apply -f discovery-server.yaml
-kubectl apply -f clickhouse.yaml
-```
+	```shell
+	kubectl apply -f discovery-server.yaml
+	kubectl apply -f clickhouse.yaml
+	```
 
 Then check the running status and logs to ensure the discovery server starts successfully and is UP.
 
-```shell
-kubectl apply -f config-service.yaml
-```
+	```shell
+	kubectl apply -f config-service.yaml
+	```
 
 Then check the running status and logs to ensure the config server starts successfully and is UP.
 
 After that deploy the sample services and Ingress.
 
-```shell
-kubectl apply -f bookinfo.yaml
-kubectl apply -f ingress.yaml
-```
+	```shell
+	kubectl apply -f bookinfo.yaml
+	kubectl apply -f ingress.yaml
+	```
 
 Take a note of your **Ingress public IP**, and the Ingress listens on port 8080 by default.
 
