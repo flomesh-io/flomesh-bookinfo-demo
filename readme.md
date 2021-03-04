@@ -40,7 +40,7 @@ Check out [pipy-operator](https://github.com/flomesh-io/pipy-operator) code, ent
 	cert-manager   cert-manager-webhook-5d59497545-vdchs     1/1     Running     0          9h
 	```
 * Install Operator
-	`kubectl apply -f artifact/pipy-operator.yaml`
+  > `kubectl apply -f artifact/pipy-operator.yaml`
 
  	You should see the output like this：
 	```shell
