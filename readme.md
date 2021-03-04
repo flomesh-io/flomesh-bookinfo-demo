@@ -88,8 +88,8 @@ kubectl apply -f proxy-profile.yaml
 Check if it's created successfully:
 ```shell
 root@k3s:~/flomesh-bookinfo-demo/kubernetes# kubectl get pf
-NAME                         AGE
-proxy-profile-002-bookinfo   32m
+NAME                         SELECTOR                                                    NAMESPACE   AGE
+proxy-profile-002-bookinfo   {"matchLabels":{"sys":"bookinfo-samples","version":"v1"}}   default     43m
 ```
 
 
