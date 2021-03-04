@@ -92,50 +92,50 @@ Check out [pipy-operator](https://github.com/flomesh-io/pipy-operator) code, ent
 All YAMLs are in the [kubernetes](kubernetes/) folder.
 
 **First of All**, create a ProxyProfile for the demo. A ProxyProfile is a CRD which defines the configuration and routing rules for the PIPY sidecar, please see [proxy-profile.yaml](kubernetes/proxy-profile.yaml) for more details.
-	```shell
-	kubectl apply -f proxy-profile.yaml
-	```
+```shell
+kubectl apply -f proxy-profile.yaml
+```
 
 
 As the services has startup dependencies, you need to deploy it one by one following the strict sequence. Before starting, check the **Endpoints** section of **clickhouse.yaml**
 
-	```yaml
-	apiVersion: v1
-	kind: Endpoints
-	metadata:
-	  name: samples-clickhouse
-	  labels:
-	    app: clickhouse
-	    service: clickhouse
-	subsets:
-	  - addresses:
-	    - ip: 172.19.182.213
-	    ports:
-	    - name: chdb
-	      port: 8123
-	      protocol: TCP
-	```
+```yaml
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: samples-clickhouse
+  labels:
+    app: clickhouse
+    service: clickhouse
+subsets:
+  - addresses:
+    - ip: 172.19.182.213
+    ports:
+    - name: chdb
+      port: 8123
+      protocol: TCP
+```
 
 Change the IP address and port according to your environment, then save and go to deploy:
-	```shell
-	kubectl apply -f discovery-server.yaml
-	kubectl apply -f clickhouse.yaml
-	```
+```shell
+kubectl apply -f discovery-server.yaml
+kubectl apply -f clickhouse.yaml
+```
 
 Then check the running status and logs to ensure the discovery server starts successfully and is UP.
 
-	```shell
-	kubectl apply -f config-service.yaml
-	```
+```shell
+kubectl apply -f config-service.yaml
+```
 
 Then check the running status and logs to ensure the config server starts successfully and is UP.
 
 After that deploy the sample services and Ingress.
 
-	```shell
-	kubectl apply -f bookinfo.yaml
-	kubectl apply -f ingress.yaml
-	```
+```shell
+kubectl apply -f bookinfo.yaml
+kubectl apply -f ingress.yaml
+```
 
 Take a note of your **Ingress public IP**, and the Ingress listens on port 8080 by default.
 
