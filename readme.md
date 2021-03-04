@@ -80,7 +80,7 @@ Check out [pipy-operator](https://github.com/flomesh-io/pipy-operator) code, ent
 ## Deploy demo
 All YAMLs are in the [kubernetes](kubernetes/) folder.
 
-**First of All**, create a ProxyProfile for the demo. A ProxyProfile is a CRD which defines the configuration and routing rules for the PIPY sidecar, please see [proxy-profile.yaml](kubernetes/proxy-profile.yaml) for more details.
+**First of All**, create a **ProxyProfile** for the demo. A ProxyProfile is a CRD which defines the configuration and routing rules for the [PIPY](https://github.com/flomesh-io/pipy) sidecar, please see [proxy-profile.yaml](kubernetes/proxy-profile.yaml) for more details.
 ```shell
 kubectl apply -f proxy-profile.yaml
 ```
