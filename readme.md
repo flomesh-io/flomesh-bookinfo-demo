@@ -85,7 +85,7 @@ All YAMLs are in the [kubernetes](kubernetes/) folder.
 kubectl apply -f proxy-profile.yaml
 ```
 
-**Second**, you need to have ClickHouse installed somewhere, and create the log table in default schema:
+**Second**, you need to have ClickHouse installed somewhere, and create the log table by [init.sql](scripts/init.sql) in default schema:
 ```SQL
 CREATE TABLE default.log
 (
