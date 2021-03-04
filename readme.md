@@ -122,13 +122,25 @@ kubectl apply -f discovery-server.yaml
 kubectl apply -f clickhouse.yaml
 ```
 
-Then check the running status and logs to ensure the discovery server starts successfully and is UP.
+Check the status and log to ensure the discovery server starts successfully and is UP.
+```shell
+root@k3s:~/flomesh-bookinfo-demo/kubernetes# kubectl get po
+NAMESPACE        NAME                                             READY   STATUS              RESTARTS   AGE
+default          samples-discovery-server-v1-56c79689c6-7n7kk     2/2     Running             0          4m14s
+```
 
+Deploy the Config Service:
 ```shell
 kubectl apply -f config-service.yaml
 ```
 
-Then check the running status and logs to ensure the config server starts successfully and is UP.
+Check the status and log to ensure the config server starts successfully and is UP.
+```shell
+root@k3s:~/flomesh-bookinfo-demo/kubernetes# kubectl get po
+NAMESPACE        NAME                                             READY   STATUS      RESTARTS   AGE
+default          samples-discovery-server-v1-56c79689c6-7n7kk     2/2     Running     0          4m42s
+default          samples-config-service-v1-65ff699755-2fckg       1/1     Running     0          31s
+```
 
 After that deploy the sample services and Ingress.
 
@@ -137,7 +149,26 @@ kubectl apply -f bookinfo.yaml
 kubectl apply -f ingress.yaml
 ```
 
-Take a note of your **Ingress public IP**, and the Ingress listens on port 8080 by default.
+Check the status of all pods, ensure all are running:
+```shell
+root@k3s:~/flomesh-bookinfo-demo/kubernetes# kubectl get po -A
+NAMESPACE        NAME                                               READY   STATUS      RESTARTS   AGE
+default          samples-config-service-v1-65ff699755-8g2gv         1/1     Running     0          2m4s
+default          svclb-samples-bookinfo-productpage-ql9h2           2/2     Running     0          89s
+default          samples-api-gateway-v1-58674c965f-ph7t8            2/2     Running     0          90s
+default          samples-bookinfo-details-v1-6cd4bd97fc-lzddv       2/2     Running     0          90s
+default          samples-bookinfo-reviews-v1-bb6647cf6-dkf7x        2/2     Running     0          89s
+default          samples-bookinfo-ratings-v1-755f99b955-k59zf       2/2     Running     0          90s
+default          samples-bookinfo-productpage-v1-7bfcd6995c-ww7g5   2/2     Running     0          89s
+default          samples-pipy-ingress-ds-56dvb                      1/1     Running     0          25s
+```
+
+Take a note of your **Ingress Host IP**, and remember the Ingress listens on port **8080** by default.
+```shell
+root@k3s:~# kubectl get nodes -o wide
+NAME   STATUS   ROLES    AGE   VERSION        INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION     CONTAINER-RUNTIME
+k3s    Ready    master   18h   v1.19.7+k3s1   10.0.2.15     <none>        Ubuntu 20.04.2 LTS   5.4.0-65-generic   containerd://1.4.3-k3s1
+```
 
 ## Test rating service:
 
