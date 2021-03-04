@@ -1,4 +1,4 @@
-apiVersion: flomesh.io/v1
+apiVersion: flomesh.io/v1alpha1
 kind: ProxyProfile
 metadata:
   name: proxy-profile-002-bookinfo
