@@ -40,9 +40,9 @@ Check out [pipy-operator](https://github.com/flomesh-io/pipy-operator) code, ent
 	cert-manager   cert-manager-webhook-5d59497545-vdchs     1/1     Running     0          9h
 	```
 * Install Operator
-  > `kubectl apply -f artifact/pipy-operator.yaml`
+	`kubectl apply -f artifact/pipy-operator.yaml`
 
-  > You should see the output like this：
+ 	You should see the output like this：
 	```shell
 	[root@crd pipy-operator]# kubectl apply -f artifact/pipy-operator.yaml
 	Warning: apiextensions.k8s.io/v1beta1 CustomResourceDefinition is deprecated in v1.16+, unavailable in v1.22+; use apiextensions.k8s.io/v1 CustomResourceDefinition
@@ -68,7 +68,7 @@ Check out [pipy-operator](https://github.com/flomesh-io/pipy-operator) code, ent
 	validatingwebhookconfiguration.admissionregistration.k8s.io/flomesh-validating-webhook-configuration created
 	```
 
-> Check the status of pods in **flomesh-system** namespace, ensure all pods are running：
+	Check the status of pods in **flomesh-system** namespace, ensure all pods are running：
 	```shell
 	[root@crd pipy-operator]# kubectl get pods -A
 	NAMESPACE        NAME                                               READY   STATUS            RESTARTS   AGE
