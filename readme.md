@@ -1,5 +1,5 @@
 # Topology
-![Topology](docs/images/bookinfo-samples-topology.png)
+![Topology](docs/images/bookinfo-samples-topology.svg)
 
 # Build
 
