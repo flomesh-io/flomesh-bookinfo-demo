@@ -1,8 +1,6 @@
 # Topology
 ![Topology](docs/images/bookinfo-samples-topology.png)
 
-# Tracing 
-![Tracing](docs/images/bookinfo-samples-tracing.png)
 
 # Build
 
