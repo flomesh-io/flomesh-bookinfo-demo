@@ -5,10 +5,12 @@ eureka:
   client:
     registerWithEureka: false
     fetchRegistry: false
+    gZipContent: false
     serviceUrl:
       defaultZone: http://${K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME:localhost}:8761/eureka/
   server:
     waitTimeInMsWhenSyncEmpty: 0
+    gZipContentFromRemoteRegion: false
   instance:
     prefer-ip-address: true
 
