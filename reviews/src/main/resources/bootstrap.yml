@@ -14,5 +14,6 @@ eureka:
   client:
     registerWithEureka: true
     fetchRegistry: true
+    gZipContent: false
     serviceUrl:
       defaultZone: http://${K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME:localhost}:${K8S_SAMPLES_DISCOVERY_SERVER_PORT:8761}/eureka/
