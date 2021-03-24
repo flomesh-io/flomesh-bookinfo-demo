@@ -13,8 +13,7 @@ echo "-------------------------------------------------------------------"
 echo "Build & Push ${CONFIG_IMG}"
 echo "-------------------------------------------------------------------"
 printf "\n"
-cd config-service
-docker build -t ${CONFIG_IMG}  .
+docker build -t ${CONFIG_IMG}  ./config-service
 docker push ${CONFIG_IMG}
 printf "\n"
 
@@ -22,8 +21,7 @@ echo "-------------------------------------------------------------------"
 echo "Build & Push ${DISCOVERY_IMG}"
 echo "-------------------------------------------------------------------"
 printf "\n"
-cd ../discovery-server
-docker build -t ${DISCOVERY_IMG}  .
+docker build -t ${DISCOVERY_IMG}  ./discovery-server
 docker push ${DISCOVERY_IMG}
 printf "\n"
 
@@ -31,8 +29,7 @@ echo "-------------------------------------------------------------------"
 echo "Build & Push ${GATEWAY_IMG}"
 echo "-------------------------------------------------------------------"
 printf "\n"
-cd ../api-gateway
-docker build -t ${GATEWAY_IMG}  .
+docker build -t ${GATEWAY_IMG}  ./api-gateway
 docker push ${GATEWAY_IMG}
 printf "\n"
 
@@ -40,8 +37,7 @@ echo "-------------------------------------------------------------------"
 echo "Build & Push ${RATINGS_IMG}"
 echo "-------------------------------------------------------------------"
 printf "\n"
-cd ../ratings
-docker build -t ${RATINGS_IMG} .
+docker build -t ${RATINGS_IMG} ./ratings
 docker push ${RATINGS_IMG}
 printf "\n"
 
@@ -49,8 +45,7 @@ echo "-------------------------------------------------------------------"
 echo "Build & Push ${REVIEWS_IMG}"
 echo "-------------------------------------------------------------------"
 printf "\n"
-cd ../reviews
-docker build -t ${REVIEWS_IMG} .
+docker build -t ${REVIEWS_IMG} ./reviews
 docker push ${REVIEWS_IMG}
 printf "\n"
 
@@ -58,8 +53,7 @@ echo "-------------------------------------------------------------------"
 echo "Build & Push ${DETAILS_IMG}"
 echo "-------------------------------------------------------------------"
 printf "\n"
-cd ../details
-docker build -t ${DETAILS_IMG}  .
+docker build -t ${DETAILS_IMG}  ./details
 docker push ${DETAILS_IMG}
 printf "\n"
 
@@ -67,6 +61,5 @@ echo "-------------------------------------------------------------------"
 echo "Build & Push ${PRODUCT_PAGE_IMG}"
 echo "-------------------------------------------------------------------"
 printf "\n"
-cd ../productpage
-docker build -t ${PRODUCT_PAGE_IMG} .
+docker build -t ${PRODUCT_PAGE_IMG} ./productpage
 docker push ${PRODUCT_PAGE_IMG}
