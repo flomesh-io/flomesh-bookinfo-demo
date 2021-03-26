@@ -10,12 +10,12 @@
 	```
 	It will generate Spring Boot fat *jar* file in each dir targets subdir
 
-* For productpage, it's written in python, no need to build
-
-	Then run the following command to build docker images:
+* For productpage, it's written in Node.js, you need to have node installed in advance.
 	```shell
-	./docker-build-push.sh 
+	cd productpage
+    npm install
 	```
+
 
 
 
@@ -336,3 +336,11 @@ Through API Gateway:
 ~~~~~bash
 curl http://localhost:10000/bookinfo-details/details/1234567890
 ~~~~~
+
+## Start Product Page
+```shell
+cd productpage
+npm start
+```
+
+Open a Web Browser, and navigate to `http://localhost:9080`
