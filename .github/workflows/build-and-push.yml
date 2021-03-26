@@ -65,13 +65,13 @@ jobs:
         push: true
         tags: flomesh/samples-bookinfo-ratings:latest
         
-    - name: Build and Push samples-bookinfo-reviews
-      uses: docker/build-push-action@v2
-      with:
-        context: ./reviews
-        platforms: linux/amd64,linux/arm64
-        push: true
-        tags: flomesh/samples-bookinfo-reviews:latest
+#     - name: Build and Push samples-bookinfo-reviews
+#       uses: docker/build-push-action@v2
+#       with:
+#         context: ./reviews
+#         platforms: linux/amd64,linux/arm64
+#         push: true
+#         tags: flomesh/samples-bookinfo-reviews:latest
         
     - name: Build and Push samples-bookinfo-details
       uses: docker/build-push-action@v2
