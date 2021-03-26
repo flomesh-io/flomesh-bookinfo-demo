@@ -272,3 +272,5 @@ gradle-app.setting
 # gradle/wrapper/gradle-wrapper.properties
 
 /.idea/
+!productpage/bin/
+/productpage/node_modules/

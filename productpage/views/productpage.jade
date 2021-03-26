@@ -1,0 +1,67 @@
+extends layout
+
+block content
+  nav.navbar.navbar-inverse.navbar-static-top
+    .container
+      .navbar-header
+        a.navbar-brand(href='#') BookInfo Sample
+        i.glyphicon.glyphicon-user(aria-hidden='true')
+      button.btn.btn-default.navbar-btn.navbar-right(type='button', data-toggle='modal', href='#login-modal')
+  #login-modal.modal.fade(role='dialog')
+    .modal-dialog
+      .modal-content
+        .modal-header
+          button.close(type='button', data-dismiss='modal') ×
+          h4.modal-title Please sign in
+        .modal-body
+          form(method='post', action='login', name='login_form')
+            p
+              input#username.form-control(type='text', name='username', placeholder='User Name')
+            p
+              input.form-control(type='password', name='passwd', placeholder='Password')
+            p
+              button.btn.btn-primary(type='submit') Sign in
+              button.btn.btn-default(type='button', data-dismiss='modal') Cancel
+  .container-fluid
+    .row
+      .col-md-12
+        h3.text-center.text-primary=product.title
+        p Summary: #{product.descriptionHtml}
+    .row
+      .col-md-6
+
+        h4.text-center.text-primary Book Details
+        dl
+          dt Type:
+          | #{details.type}
+          dt Pages:
+          | #{details.pages}
+          dt Publisher:
+          | #{details.publisher}
+          dt Language:
+          | #{details.language}
+          dt ISBN-10:
+          | #{details['ISBN-10']}
+          dt ISBN-13:
+          | #{details['ISBN-13']}
+
+      .col-md-6
+
+        h4.text-center.text-primary Book Reviews
+        each review in reviews.reviews
+          blockquote
+            p=review.text
+            small=review.reviewer
+            if review.rating
+              p
+                font(color=review.rating.color)
+                  - for (var i = 0; i < review.rating.stars; ++i) {
+                    span.glyphicon.glyphicon-star
+                  - }
+                  - for (var i = 0; i < 5 - review.rating.stars; ++i) {
+                    span.glyphicon.glyphicon-star-empty
+                  - }
+            else if review.error
+              p=review.error
+
+

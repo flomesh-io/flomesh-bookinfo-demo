@@ -312,6 +312,10 @@ spec:
         env:
         - name: SERVICES_DOMAIN
           value: default.svc
+        - name: K8S_SAMPLES_API_GATEWAY_HOSTNAME
+          value: samples-api-gateway
+        - name: K8S_SAMPLES_API_GATEWAY_PORT
+          value: "10010"
         - name: DETAILS_HOSTNAME
           value: samples-bookinfo-details
         - name: RATINGS_HOSTNAME

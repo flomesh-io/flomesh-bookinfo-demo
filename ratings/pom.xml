@@ -4,14 +4,12 @@
 
     <parent>
         <artifactId>bookinfo</artifactId>
-        <groupId>com.redhat</groupId>
-        <version>1.0.0-SNAPSHOT</version>
+        <groupId>io.flomesh</groupId>
+        <version>1.0.0</version>
     </parent>
 
     <artifactId>bookinfo-ratings</artifactId>
-    <packaging>jar</packaging>
-    <name>ratings</name>
-    <description>Ratings project for BookInfo</description>
+    <name>Bookinfo - Ratings Service</name>
 
     <dependencies>
         <!--
@@ -21,6 +19,11 @@
 			<version>0.2.2</version>
 		</dependency>
 		-->
+        <dependency>
+            <groupId>io.flomesh</groupId>
+            <artifactId>bookinfo-commons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.cloud</groupId>
@@ -31,19 +34,24 @@
             <artifactId>spring-cloud-starter-sleuth</artifactId>
         </dependency>
 
-        <dependency>
+        <!--<dependency>
             <groupId>io.opentracing.contrib</groupId>
             <artifactId>opentracing-spring-cloud-starter</artifactId>
             <version>0.1.5</version>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-undertow</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -55,19 +63,19 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-eureka</artifactId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-feign</artifactId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-hystrix</artifactId>
+            <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-ribbon</artifactId>
+            <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
         </dependency>
     </dependencies>
 
