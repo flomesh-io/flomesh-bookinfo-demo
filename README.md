@@ -79,11 +79,11 @@ Check out [pipy-operator](https://github.com/flomesh-io/pipy-operator) code, ent
 	```
 
 ## Deploy demo
-All YAMLs are in the [kubernetes](kubernetes/) folder.
+All YAMLs are in the [kubernetes](kubernetes/) folder, please `cd kubernetes/` in advance.
 
-**First of All**, create a **ProxyProfile** for the demo. A ProxyProfile is a CRD which defines the configuration and routing rules for the [pipy](https://github.com/flomesh-io/pipy) sidecar, please see [proxy-profile.yaml](kubernetes/proxy-profile.yaml) for more details.
+**First of All**, create a **ProxyProfile** for the demo. A ProxyProfile is a CRD which defines the configuration and routing rules for the [pipy](https://github.com/flomesh-io/pipy) sidecar, please see [proxy-profile.yaml](kubernetes/pf/proxy-profile.yaml) for more details.
 ```shell
-kubectl apply -f proxy-profile.yaml
+kubectl apply -f pf/proxy-profile.yaml
 ```
 
 Check if it's created successfully:
@@ -94,7 +94,7 @@ proxy-profile-002-bookinfo   {"matchLabels":{"sys":"bookinfo-samples","version":
 ```
 
 
-**Second**, you need to have ClickHouse installed somewhere, and create the log table by [init.sql](scripts/init.sql) in default schema:
+**Second**, you need to have ClickHouse installed somewhere, and create the log table by [init-log.sql](scripts/init-log.sql) in default schema:
 ```SQL
 CREATE TABLE default.log
 (
@@ -108,7 +108,7 @@ ORDER BY uuid
 SETTINGS index_granularity = 8192;
 ```
 
-As the services has startup dependencies, you need to deploy it one by one following the strict order. Before starting, check the **Endpoints** section of **clickhouse.yaml**
+As the services has startup dependencies, you need to deploy it one by one following the strict order. Before starting, check the **Endpoints** section of **base/clickhouse.yaml**
 
 ```yaml
 apiVersion: v1
@@ -129,8 +129,8 @@ subsets:
 
 Change the IP address and port according to your environment, then save and go to deploy:
 ```shell
-kubectl apply -f discovery-server.yaml
-kubectl apply -f clickhouse.yaml
+kubectl apply -f base/discovery-server.yaml
+kubectl apply -f base/clickhouse.yaml
 ```
 
 Check the status and log to ensure the discovery server starts successfully and is UP.
@@ -142,7 +142,7 @@ default          samples-discovery-server-v1-56c79689c6-7n7kk     2/2     Runnin
 
 Deploy the Config Service:
 ```shell
-kubectl apply -f config-service.yaml
+kubectl apply -f base/config-service.yaml
 ```
 
 Check the status and log to ensure the config server starts successfully and is UP.
@@ -156,8 +156,8 @@ default          samples-config-service-v1-65ff699755-2fckg       1/1     Runnin
 After that deploy the API gateway, sample services and Ingress.
 
 ```shell
-kubectl apply -f bookinfo.yaml
-kubectl apply -f ingress.yaml
+kubectl apply -f base/bookinfo.yaml
+kubectl apply -f base/ingress.yaml
 ```
 
 Check the status of all pods, ensure all are running:

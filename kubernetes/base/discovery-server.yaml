@@ -43,7 +43,7 @@ spec:
         "flomesh.io/inject": "true"
     spec:
       containers:
-        - name: discovery
+        - name: app
           image: docker.io/flomesh/samples-discovery-server:latest
           imagePullPolicy: Always
           ports:

@@ -1,0 +1,16 @@
+resources:
+  - base
+
+vars:
+  - name: DISCOVERY_SERVICE_NAME
+    objref:
+      kind: Service
+      version: v1
+      name: samples-discovery-server
+  - name: DISCOVERY_SERVICE_SIDECAR_PORT
+    objref:
+      kind: Service
+      version: v1
+      name: samples-discovery-server
+    fieldref:
+      fieldpath: spec.ports['sidecar'].

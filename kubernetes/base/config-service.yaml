@@ -36,8 +36,18 @@ spec:
         version: v1
         service: samples-config-service
     spec:
+      initContainers:
+        - name: check-discovery
+          image: busybox:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |-
+              until nc -vz samples-discovery-server 8761; \
+                do echo "Waiting for Eureka ready ..."; \
+                sleep 5; \
+              done;
       containers:
-        - name: config
+        - name: app
           image: docker.io/flomesh/samples-config-service:latest
           imagePullPolicy: Always
           ports:

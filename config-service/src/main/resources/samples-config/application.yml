@@ -1,12 +1,17 @@
 management:
   security:
     enabled: false
+  endpoints:
+    enabled-by-default: true
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    jmx:
+      enabled: false
+    shutdown:
+      enabled: true
 
-endpoints:
-  jmx:
-    enabled: false
-  shutdown:
-    enabled: true
 
 spring:
   jmx:

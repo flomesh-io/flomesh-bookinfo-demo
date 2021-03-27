@@ -69,8 +69,18 @@ spec:
       annotations:
         "flomesh.io/inject": "true"
     spec:
+      initContainers:
+        - name: check-config
+          image: busybox:latest
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - |-
+              until nc -vz samples-config-service 8888; \
+                do echo "Waiting for config service ready ..."; \
+                sleep 5; \
+              done;
       containers:
-        - name: gateway
+        - name: app
           image: docker.io/flomesh/samples-api-gateway:latest
           imagePullPolicy: Always
           ports:
@@ -128,8 +138,18 @@ spec:
       annotations:
         "flomesh.io/inject": "true"
     spec:
+      initContainers:
+        - name: check-config
+          image: busybox:latest
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - |-
+              until nc -vz samples-config-service 8888; \
+                do echo "Waiting for config service ready ..."; \
+                sleep 5; \
+              done;
       containers:
-      - name: details
+      - name: app
         image: docker.io/flomesh/samples-bookinfo-details:latest
         imagePullPolicy: Always
         ports:
@@ -186,8 +206,18 @@ spec:
       annotations:
         "flomesh.io/inject": "true"
     spec:
+      initContainers:
+        - name: check-config
+          image: busybox:latest
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - |-
+              until nc -vz samples-config-service 8888; \
+                do echo "Waiting for config service ready ..."; \
+                sleep 5; \
+              done;
       containers:
-      - name: ratings
+      - name: app
         image: docker.io/flomesh/samples-bookinfo-ratings:latest
         imagePullPolicy: Always
         ports:
@@ -244,8 +274,18 @@ spec:
       annotations:
         "flomesh.io/inject": "true"
     spec:
+      initContainers:
+        - name: check-config
+          image: busybox:latest
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - |-
+              until nc -vz samples-config-service 8888; \
+                do echo "Waiting for config service ready ..."; \
+                sleep 5; \
+              done;
       containers:
-      - name: reviews
+      - name: app
         image: docker.io/flomesh/samples-bookinfo-reviews:latest
         imagePullPolicy: Always
         ports:
@@ -307,8 +347,18 @@ spec:
       annotations:
         "flomesh.io/inject": "true"
     spec:
+      initContainers:
+        - name: check-config
+          image: busybox:latest
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - |-
+              until nc -vz samples-api-gateway 10000; \
+                do echo "Waiting for API Gateway ready ..."; \
+                sleep 5; \
+              done;
       containers:
-      - name: productpage
+      - name: app
         env:
         - name: SERVICES_DOMAIN
           value: default.svc
