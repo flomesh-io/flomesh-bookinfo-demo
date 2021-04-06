@@ -1,0 +1,6 @@
+resources:
+  - clickhouse.yaml
+  - discovery-server.yaml
+  - config-service.yaml
+  - bookinfo.yaml
+  - ingress.yaml
