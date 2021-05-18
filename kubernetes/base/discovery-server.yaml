@@ -53,3 +53,7 @@ spec:
               value: samples-discovery-server
             - name: K8S_SERVICE_NAME
               value: samples-discovery-server
+          resources:
+            limits:
+              memory: 300Mi
+              cpu: 100m

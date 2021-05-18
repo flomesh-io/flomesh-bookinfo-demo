@@ -61,3 +61,7 @@ spec:
               value: samples-bookinfo-ratings
             - name: K8S_SERVICE_NAME
               value: samples-config-service
+          resources:
+            limits:
+              memory: 300Mi
+              cpu: 100m

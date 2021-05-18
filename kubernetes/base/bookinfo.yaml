@@ -92,6 +92,10 @@ spec:
               value: "8771"
             - name: K8S_SERVICE_NAME
               value: samples-api-gateway
+          resources:
+            limits:
+              memory: 300Mi
+              cpu: 100m
 ---
 
 ##################################################################################################
@@ -161,6 +165,10 @@ spec:
             value: "8771"
           - name: K8S_SERVICE_NAME
             value: samples-bookinfo-details
+        resources:
+          limits:
+            memory: 300Mi
+            cpu: 100m
 ---
 ##################################################################################################
 # Ratings service
@@ -229,6 +237,10 @@ spec:
             value: "8771"
           - name: K8S_SERVICE_NAME
             value: samples-bookinfo-ratings
+        resources:
+          limits:
+            memory: 300Mi
+            cpu: 100m
 ---
 ##################################################################################################
 # Reviews service
@@ -301,6 +313,10 @@ spec:
             value: "8111"
           - name: K8S_SERVICE_NAME
             value: samples-bookinfo-reviews
+        resources:
+          limits:
+            memory: 300Mi
+            cpu: 100m
 ---
 ##################################################################################################
 # Productpage services
@@ -378,4 +394,8 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 9080
+        resources:
+          limits:
+            memory: 300Mi
+            cpu: 100m
 ---
