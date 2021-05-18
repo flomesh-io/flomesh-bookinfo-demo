@@ -23,9 +23,53 @@
 
 ## Deploy pipy-operator
 Check out [pipy-operator](https://github.com/flomesh-io/pipy-operator) code, enter the root folder of this project.
-* Install Cert Manager v1.1.0
+* Install Cert Manager v1.3.1
   	```shell
-	kubectl apply -f etc/cert-manager-v1.1.0.yaml
+	root@bookinfo:~/pipy-operator# kubectl apply -f etc/cert-manager-v1.3.1.yaml
+	
+	customresourcedefinition.apiextensions.k8s.io/certificaterequests.cert-manager.io created
+	customresourcedefinition.apiextensions.k8s.io/certificates.cert-manager.io created
+	customresourcedefinition.apiextensions.k8s.io/challenges.acme.cert-manager.io created
+	customresourcedefinition.apiextensions.k8s.io/clusterissuers.cert-manager.io created
+	customresourcedefinition.apiextensions.k8s.io/issuers.cert-manager.io created
+	customresourcedefinition.apiextensions.k8s.io/orders.acme.cert-manager.io created
+	namespace/cert-manager created
+	serviceaccount/cert-manager-cainjector created
+	serviceaccount/cert-manager created
+	serviceaccount/cert-manager-webhook created
+	clusterrole.rbac.authorization.k8s.io/cert-manager-cainjector created
+	clusterrole.rbac.authorization.k8s.io/cert-manager-controller-issuers created
+	clusterrole.rbac.authorization.k8s.io/cert-manager-controller-clusterissuers created
+	clusterrole.rbac.authorization.k8s.io/cert-manager-controller-certificates created
+	clusterrole.rbac.authorization.k8s.io/cert-manager-controller-orders created
+	clusterrole.rbac.authorization.k8s.io/cert-manager-controller-challenges created
+	clusterrole.rbac.authorization.k8s.io/cert-manager-controller-ingress-shim created
+	clusterrole.rbac.authorization.k8s.io/cert-manager-view created
+	clusterrole.rbac.authorization.k8s.io/cert-manager-edit created
+	clusterrole.rbac.authorization.k8s.io/cert-manager-controller-approve:cert-manager-io created
+	clusterrole.rbac.authorization.k8s.io/cert-manager-webhook:subjectaccessreviews created
+	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-cainjector created
+	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-issuers created
+	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-clusterissuers created
+	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-certificates created
+	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-orders created
+	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-challenges created
+	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-ingress-shim created
+	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-approve:cert-manager-io created
+	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-webhook:subjectaccessreviews created
+	role.rbac.authorization.k8s.io/cert-manager-cainjector:leaderelection created
+	role.rbac.authorization.k8s.io/cert-manager:leaderelection created
+	role.rbac.authorization.k8s.io/cert-manager-webhook:dynamic-serving created
+	rolebinding.rbac.authorization.k8s.io/cert-manager-cainjector:leaderelection created
+	rolebinding.rbac.authorization.k8s.io/cert-manager:leaderelection created
+	rolebinding.rbac.authorization.k8s.io/cert-manager-webhook:dynamic-serving created
+	service/cert-manager created
+	service/cert-manager-webhook created
+	deployment.apps/cert-manager-cainjector created
+	deployment.apps/cert-manager created
+	deployment.apps/cert-manager-webhook created
+	mutatingwebhookconfiguration.admissionregistration.k8s.io/cert-manager-webhook created
+	validatingwebhookconfiguration.admissionregistration.k8s.io/cert-manager-webhook created
 	```
 
 	Wait for the pods in **cert-manager** namespace are all running.
@@ -43,19 +87,19 @@ Check out [pipy-operator](https://github.com/flomesh-io/pipy-operator) code, ent
 
  	You should see the output like this：
 	```shell
-	[root@crd pipy-operator]# kubectl apply -f artifact/pipy-operator.yaml
 	namespace/flomesh-system created
-	Warning: apiextensions.k8s.io/v1beta1 CustomResourceDefinition is deprecated in v1.16+, unavailable in v1.22+; use apiextensions.k8s.io/v1 CustomResourceDefinition
 	customresourcedefinition.apiextensions.k8s.io/proxies.flomesh.io created
 	customresourcedefinition.apiextensions.k8s.io/proxyprofiles.flomesh.io created
+	serviceaccount/flomesh-controller-manager created
 	role.rbac.authorization.k8s.io/flomesh-leader-election-role created
 	clusterrole.rbac.authorization.k8s.io/flomesh-manager-role created
-	clusterrole.rbac.authorization.k8s.io/flomesh-proxy-role created
-	Warning: rbac.authorization.k8s.io/v1beta1 ClusterRole is deprecated in v1.17+, unavailable in v1.22+; use rbac.authorization.k8s.io/v1 ClusterRole
 	clusterrole.rbac.authorization.k8s.io/flomesh-metrics-reader created
+	clusterrole.rbac.authorization.k8s.io/flomesh-proxy-role created
 	rolebinding.rbac.authorization.k8s.io/flomesh-leader-election-rolebinding created
 	clusterrolebinding.rbac.authorization.k8s.io/flomesh-manager-rolebinding created
 	clusterrolebinding.rbac.authorization.k8s.io/flomesh-proxy-rolebinding created
+	configmap/flomesh-manager-config created
+	configmap/flomesh-proxy-injector-tpl created
 	service/flomesh-controller-manager-metrics-service created
 	service/flomesh-pipy-sidecar-injector-service created
 	service/flomesh-webhook-service created
@@ -63,10 +107,8 @@ Check out [pipy-operator](https://github.com/flomesh-io/pipy-operator) code, ent
 	deployment.apps/flomesh-pipy-sidecar-injector created
 	certificate.cert-manager.io/flomesh-serving-cert created
 	issuer.cert-manager.io/flomesh-selfsigned-issuer created
-	Warning: admissionregistration.k8s.io/v1beta1 MutatingWebhookConfiguration is deprecated in v1.16+, unavailable in v1.22+; use admissionregistration.k8s.io/v1 MutatingWebhookConfiguration
 	mutatingwebhookconfiguration.admissionregistration.k8s.io/flomesh-mutating-webhook-configuration created
 	mutatingwebhookconfiguration.admissionregistration.k8s.io/flomesh-sidecar-injector-webhook-configuration created
-	Warning: admissionregistration.k8s.io/v1beta1 ValidatingWebhookConfiguration is deprecated in v1.16+, unavailable in v1.22+; use admissionregistration.k8s.io/v1 ValidatingWebhookConfiguration
 	validatingwebhookconfiguration.admissionregistration.k8s.io/flomesh-validating-webhook-configuration created
 	```
 
