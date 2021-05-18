@@ -112,7 +112,7 @@ CREATE TABLE default.log
 	`response.protocol` String DEFAULT JSONExtractString(response, 'protocol'),
 	`message` String
 )
-	ENGINE = MergeTree
+ENGINE = MergeTree
 PARTITION BY (toYYYYMM(toDateTime(startTime / 1000)))
 ORDER BY (status, startTime)
 SETTINGS index_granularity = 8192;
