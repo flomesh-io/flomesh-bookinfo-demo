@@ -125,7 +125,7 @@ All YAMLs are in the [kubernetes](kubernetes/) folder, please `cd kubernetes/` i
 
 **First of All**, create a **ProxyProfile** for the demo. A ProxyProfile is a CRD which defines the configuration and routing rules for the [pipy](https://github.com/flomesh-io/pipy) sidecar, please see [proxy-profile.yaml](kubernetes/sidecar/proxy-profile.yaml) for more details.
 ```shell
-kubectl apply -f pf/proxy-profile.yaml
+kubectl apply -f sidecar/proxy-profile.yaml
 ```
 
 Check if it's created successfully:
@@ -135,8 +135,42 @@ NAME                         SELECTOR                                           
 proxy-profile-002-bookinfo   {"matchLabels":{"sys":"bookinfo-samples","version":"v1"}}   default     43m
 ```
 
+**Second**, install ingress controller(ingress-pipy).
+```shell
+root@bookinfo:/vagrant/kubernetes# kubectl apply -f ingress/ingress-pipy.yaml 
 
-**Second**, you need to have ClickHouse installed somewhere, and create the log table by [init-log.sql](scripts/init-log.sql) in default schema:
+namespace/ingress-pipy created
+customresourcedefinition.apiextensions.k8s.io/ingressparameters.flomesh.io created
+serviceaccount/ingress-pipy created
+role.rbac.authorization.k8s.io/ingress-pipy-leader-election-role created
+clusterrole.rbac.authorization.k8s.io/ingress-pipy-role created
+rolebinding.rbac.authorization.k8s.io/ingress-pipy-leader-election-rolebinding created
+clusterrolebinding.rbac.authorization.k8s.io/ingress-pipy-rolebinding created
+configmap/ingress-config created
+service/ingress-pipy-cfg created
+service/ingress-pipy-controller created
+service/ingress-pipy-defaultbackend created
+service/webhook-service created
+deployment.apps/ingress-pipy-cfg created
+deployment.apps/ingress-pipy-controller created
+deployment.apps/ingress-pipy-manager created
+certificate.cert-manager.io/serving-cert created
+issuer.cert-manager.io/selfsigned-issuer created
+mutatingwebhookconfiguration.admissionregistration.k8s.io/mutating-webhook-configuration created
+validatingwebhookconfiguration.admissionregistration.k8s.io/validating-webhook-configuration created
+```
+
+Check the status of pods in **ingress-pipy** namespace, ensure all pods are running：
+```shell
+root@bookinfo:/vagrant/kubernetes# kubectl get po -n ingress-pipy 
+NAME                                       READY   STATUS    RESTARTS   AGE
+svclb-ingress-pipy-controller-p8h9g        1/1     Running   0          2m58s
+ingress-pipy-cfg-6856d674f7-zcgbr          1/1     Running   0          2m58s
+ingress-pipy-controller-76cd866d78-bcmb5   1/1     Running   0          2m58s
+ingress-pipy-manager-6dddc98484-q4ls5      1/1     Running   0          2m58s
+```
+
+**Third**, you need to have ClickHouse installed somewhere, and create the log table by [init-log.sql](scripts/init-log.sql) in default schema:
 ```SQL
 CREATE TABLE default.log
 (
@@ -209,7 +243,7 @@ After that deploy the API gateway, sample services and Ingress.
 
 ```shell
 kubectl apply -f base/bookinfo.yaml
-kubectl apply -f base/ingress.yaml
+kubectl apply -f ingress/ingress.yaml
 ```
 
 Check the status of all pods, ensure all are running:
@@ -217,13 +251,10 @@ Check the status of all pods, ensure all are running:
 root@k3s:~/flomesh-bookinfo-demo/kubernetes# kubectl get po
 NAMESPACE        NAME                                               READY   STATUS      RESTARTS   AGE
 default          samples-config-service-v1-65ff699755-8g2gv         1/1     Running     0          2m4s
-default          svclb-samples-bookinfo-productpage-ql9h2           2/2     Running     0          89s
 default          samples-api-gateway-v1-58674c965f-ph7t8            2/2     Running     0          90s
 default          samples-bookinfo-details-v1-6cd4bd97fc-lzddv       2/2     Running     0          90s
 default          samples-bookinfo-reviews-v1-bb6647cf6-dkf7x        2/2     Running     0          89s
 default          samples-bookinfo-ratings-v1-755f99b955-k59zf       2/2     Running     0          90s
-default          samples-bookinfo-productpage-v1-7bfcd6995c-ww7g5   2/2     Running     0          89s
-default          samples-pipy-ingress-ds-56dvb                      1/1     Running     0          25s
 ```
 
 Take a note of your **Ingress Host IP**, and remember the Ingress listens on port **8080** by default.
@@ -245,7 +276,7 @@ samples-pipy-ingress   Ingress   8080   flomesh/pipy:latest   13m
 create ratings in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
 
 ~~~~~bash
-curl -X POST http://ingress-ip:8080/bookinfo-ratings/ratings \
+curl -X POST http://10.0.2.15/bookinfo-ratings/ratings \
 	-H "Content-Type: application/json" \
 	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","rating":3}' 
 ~~~~~
@@ -253,7 +284,7 @@ curl -X POST http://ingress-ip:8080/bookinfo-ratings/ratings \
 query ratings by product_id in kubernetes, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
 
 ~~~~~bash
-curl http://ingress-ip:8080/bookinfo-ratings/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
+curl http://10.0.2.15/bookinfo-ratings/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
 ~~~~~
 
 ## Test review service:
@@ -261,7 +292,7 @@ curl http://ingress-ip:8080/bookinfo-ratings/ratings/a071c269-369c-4f79-be03-6a4
 create review in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
 
 ~~~~~bash
-curl -X POST http://ingress-ip:8080/bookinfo-reviews/reviews \
+curl -X POST http://10.0.2.15/bookinfo-reviews/reviews \
 	-H "Content-Type: application/json" \
 	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","review":"This was OK.","rating":3}'
 ~~~~~
@@ -269,7 +300,7 @@ curl -X POST http://ingress-ip:8080/bookinfo-reviews/reviews \
 query review by product_id in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
 
 ~~~~~bash
-curl http://ingress-ip:8080/bookinfo-reviews/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
+curl http://10.0.2.15/bookinfo-reviews/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
 ~~~~~
 
 ## Test detail service
@@ -277,7 +308,7 @@ curl http://ingress-ip:8080/bookinfo-reviews/reviews/a071c269-369c-4f79-be03-6a4
  query detail by isbn in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
 
 ~~~~~bash
-curl http://ingress-ip:8080/bookinfo-details/details/1234567890
+curl http://10.0.2.15/bookinfo-details/details/1234567890
 ~~~~~
 
 
