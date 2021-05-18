@@ -274,3 +274,4 @@ gradle-app.setting
 /.idea/
 !productpage/bin/
 /productpage/node_modules/
+.vagrant/
