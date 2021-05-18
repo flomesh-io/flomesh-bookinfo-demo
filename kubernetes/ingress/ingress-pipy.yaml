@@ -1,0 +1,893 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/instance: ingress-pipy
+    app.kubernetes.io/managed-by: Kustomize
+    app.kubernetes.io/name: ingress-pipy
+    app.kubernetes.io/version: 0.2.0
+  name: ingress-pipy
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: ingress-pipy/serving-cert
+    controller-gen.kubebuilder.io/version: v0.4.1
+  name: ingressparameters.flomesh.io
+spec:
+  group: flomesh.io
+  names:
+    kind: IngressParameter
+    listKind: IngressParameterList
+    plural: ingressparameters
+    shortNames:
+      - igp
+    singular: ingressparameter
+  scope: Cluster
+  versions:
+    - additionalPrinterColumns:
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+      name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          description: IngressParameter is the Schema for the ingressparameters API
+          properties:
+            apiVersion:
+              description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              type: string
+            kind:
+              description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              type: string
+            metadata:
+              type: object
+            spec:
+              description: IngressParameterSpec defines the desired state of IngressParameter
+              properties:
+                foo:
+                  description: Foo is an example field of IngressParameter. Edit ingressparameter_types.go to remove/update
+                  type: string
+              type: object
+            status:
+              description: IngressParameterStatus defines the observed state of IngressParameter
+              type: object
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ingress-pipy
+  namespace: ingress-pipy
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ingress-pipy-leader-election-role
+  namespace: ingress-pipy
+rules:
+  - apiGroups:
+      - ""
+      - coordination.k8s.io
+    resources:
+      - configmaps
+      - leases
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: ingress-pipy-role
+rules:
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - endpoints
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - volumes
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - flomesh.io
+    resources:
+      - ingressparameters
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - flomesh.io
+    resources:
+      - ingressparameters/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - flomesh.io
+    resources:
+      - ingressparameters/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingressclasses
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ingress-pipy-leader-election-rolebinding
+  namespace: ingress-pipy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ingress-pipy-leader-election-role
+subjects:
+  - kind: ServiceAccount
+    name: ingress-pipy
+    namespace: ingress-pipy
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ingress-pipy-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ingress-pipy-role
+subjects:
+  - kind: ServiceAccount
+    name: ingress-pipy
+    namespace: ingress-pipy
+---
+apiVersion: v1
+data:
+  ingress.js: |+
+    pipy({
+      _g: {
+        // [Ingress] - Start
+        router: null,
+        timestamp: 0,
+        // [Ingress] - End
+
+        // [LOGGING] - Start
+        buffer: new Data,
+        bufferSize: 0,
+        bufferTime: 0,
+        // [LOGGING] - End
+      },
+
+      // [Ingress] - Start
+      _target: undefined,
+      _configUrl: new URL(os.env.INGRESS_CONFIG_URL || 'http://127.0.0.1:6000/routes'),
+      _versionUrl: new URL(os.env.INGRESS_VERSION_URL || 'http://127.0.0.1:6000/version'),
+      _needsUpdateConfig: undefined,
+      // [Ingress] - End
+
+      // [LOGGING] - Start
+      _BATCH_SIZE: 5000,
+      _BATCH_TIMEOUT: 5000,
+      _queue: null,
+      _startTime: 0,
+      _responseTime: 0,
+      // [LOGGING] - End
+    })
+
+    .listen(os.env.INGRESS_PORT || 8000)
+      // [LOGGING] - Start
+      .onSessionStart(() => _queue = [])
+      .fork('in')
+      // [LOGGING] - End
+
+      .link('request')
+
+      // [LOGGING] - Start
+      .fork('out')
+      // [LOGGING] - End
+
+    // ------------------------------ [INGRESS] Start ------------------------------
+
+
+    // ------------------------------ [INGRESS] End ------------------------------
+    .pipeline('request')
+      .decodeHttpRequest()
+      .onMessageStart((e, routeKey) => (
+        routeKey = (e.head.headers.host || '') + e.head.path,
+          console.log("==============> routeKey = " + routeKey),
+          _target = _g.router?.find?.(routeKey)?.select?.() || '',
+          console.log("==============> resolved target = " + _target)
+      ))
+      .link(
+        '404', () => _target === '',
+        'pass', () => _target !== undefined,
+      )
+
+    .pipeline('404')
+      .replaceMessage(new Message('Not Found.'))
+      .encodeHttpResponse({ status: 404 })
+
+    .pipeline('pass')
+      .encodeHttpRequest()
+      .connect(() => _target)
+
+      // default backend service
+    .listen(9000)
+      .decodeHttpRequest()
+      .replaceMessage(new Message({ status: 404 }, 'Not Found.'))
+      .encodeHttpResponse()
+
+    .task('5s')
+      .replaceMessage(() => (
+        new Message({
+          method: 'GET',
+          path: _versionUrl.path,
+          headers: {
+            Host: _versionUrl.host,
+          },
+        })
+      ))
+      .encodeHttpRequest()
+      .connect(() => _versionUrl.host)
+      .decodeHttpResponse()
+      .onMessageBody(body => _needsUpdateConfig = (body.toString() != _g.timestamp))
+      .link(
+        'update-config', () => _needsUpdateConfig === true,
+        'end-of-update', () => _needsUpdateConfig === false,
+      )
+
+    .pipeline('update-config')
+      .replaceMessage(() => (
+        new Message({
+          method: 'GET',
+          path: _configUrl.path,
+          headers: {
+            Host: _configUrl.host,
+          },
+        })
+      ))
+      .encodeHttpRequest()
+      .connect(() => _configUrl.host)
+      .decodeHttpResponse()
+      .onMessageBody((
+        body,
+        config,
+        router,
+        ingresses,
+        backend,
+        path,
+        upstreams,
+      ) => (
+        console.log('Got new configuration:', body.toString()),
+
+          router = new algo.URLRouter,
+          config = JSON.decode(body),
+          ingresses = config?.ingresses,
+          _g.timestamp = config?.version,
+          ingresses ? (
+            // for each ingress
+            ingresses.forEach(ing => (
+              path = (ing?.host || '') + (ing?.path || '/'),
+                ing.endpoints ? (
+                  upstreams = {},
+                    ing.endpoints.forEach( ep => (
+                      upstreams[ep.address + ":" + ep.port] = 1
+                    )),
+                    console.log("path: " + path + ", upstreams=" + JSON.stringify(upstreams)),
+
+                    backend = new algo.RoundRobinLoadBalancer(upstreams),
+                    router.add(path, backend),
+
+                    _g.router = router
+                ) : (
+                  console.log("No endpoints avaliable for ingress, path=" + path)
+                )
+            )),
+              console.log("Routes are loaded: " + _g.router)
+          ) : console.log('Invalid JSON encoding')
+      ))
+      .link('end-of-update')
+
+    .pipeline('end-of-update')
+      .replaceMessage(() => new SessionEnd)
+    // ------------------------------ [INGRESS] End ------------------------------
+
+    // ------------------------------ [LOG] Start ------------------------------
+    // Extract request info
+    .pipeline('in')
+      .decodeHttpRequest()
+      .onMessageStart(() => _startTime = Date.now())
+      .onMessage(msg => _queue.push({
+        startTime: _startTime,
+        ...msg.head,
+        body: msg.body.toString(),
+      }))
+    // Extract response info
+    .pipeline('out')
+      .decodeHttpResponse()
+      .onMessageStart(() => _responseTime = Date.now())
+      .replaceMessage(msg => new Message(
+        JSON.encode({
+          ..._queue.shift(),
+          latency: _responseTime - _startTime,
+          endTime: Date.now(),
+          response: {
+            ...msg.head,
+            body: msg.body.toString(),
+          },
+        }).push(',')
+      ))
+      .link('batch')
+
+    // Accumulate log messages into batches
+    .pipeline('batch')
+      .replaceMessage(msg => (
+        msg.body.size > 0 && (
+          _g.buffer.push(msg.body),
+            _g.bufferSize++
+        ),
+          (_g.bufferSize >= _BATCH_SIZE ||
+            (_g.bufferSize > 0 && Date.now() - _g.bufferTime > _BATCH_TIMEOUT)) ? (
+            new Message(_g.buffer)
+          ) : (
+            null
+          )
+      ))
+      .onMessageStart(() => (
+        _g.buffer = new Data,
+          _g.bufferSize = 0,
+          _g.bufferTime = Date.now()
+      ))
+      .mux('mux')
+
+    // Shared logging session
+    .pipeline('mux')
+      .encodeHttpRequest({
+        method: 'POST',
+        path: '/?query=insert%20into%20log(message)%20format%20JSONAsString',
+        //headers: {Authorization: 'Basic dGVzdDp0ZXN0'}
+      })
+      .connect('samples-clickhouse.default.svc:8123')
+      .decodeHttpResponse()
+
+    // Regularly flush the logging session
+    .task('1s')
+      .fork('batch')
+      .replaceMessage(() => new SessionEnd)
+    // ------------------------------ [LOG] End ------------------------------
+
+kind: ConfigMap
+metadata:
+  name: ingress-config
+  namespace: ingress-pipy
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: config
+    app.kubernetes.io/instance: ingress-pipy
+    app.kubernetes.io/managed-by: Kustomize
+    app.kubernetes.io/name: ingress-pipy
+    app.kubernetes.io/version: 0.2.0
+  name: ingress-pipy-cfg
+  namespace: ingress-pipy
+spec:
+  ports:
+    - name: config
+      port: 6000
+      protocol: TCP
+      targetPort: config
+  selector:
+    app.kubernetes.io/component: config
+    app.kubernetes.io/instance: ingress-pipy
+    app.kubernetes.io/name: ingress-pipy
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-pipy
+    app.kubernetes.io/managed-by: Kustomize
+    app.kubernetes.io/name: ingress-pipy
+    app.kubernetes.io/version: 0.2.0
+  name: ingress-pipy-controller
+  namespace: ingress-pipy
+spec:
+  externalTrafficPolicy: Local
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: ingress
+  selector:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-pipy
+    app.kubernetes.io/name: ingress-pipy
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: default-backend
+    app.kubernetes.io/instance: ingress-pipy
+    app.kubernetes.io/managed-by: Kustomize
+    app.kubernetes.io/name: ingress-pipy
+    app.kubernetes.io/version: 0.2.0
+  name: ingress-pipy-defaultbackend
+  namespace: ingress-pipy
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 9000
+  selector:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-pipy
+    app.kubernetes.io/name: ingress-pipy
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhook-service
+  namespace: ingress-pipy
+spec:
+  ports:
+    - port: 443
+      targetPort: 9443
+  selector:
+    control-plane: ingress-pipy-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: config
+    app.kubernetes.io/instance: ingress-pipy
+    app.kubernetes.io/managed-by: Kustomize
+    app.kubernetes.io/name: ingress-pipy
+    app.kubernetes.io/version: 0.2.0
+  name: ingress-pipy-cfg
+  namespace: ingress-pipy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: config
+      app.kubernetes.io/instance: ingress-pipy
+      app.kubernetes.io/name: ingress-pipy
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: config
+        app.kubernetes.io/instance: ingress-pipy
+        app.kubernetes.io/name: ingress-pipy
+    spec:
+      containers:
+        - args:
+            - --leader-elect=false
+            - --default-backend=ingress-pipy-defaultbackend.ingress-pipy.svc
+            - --config-bind-address=:6000
+          command:
+            - /ingress-cfg
+          image: flomesh/ingress-cfg:0.2.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          name: config
+          ports:
+            - containerPort: 6000
+              name: config
+            - containerPort: 8080
+              name: metrics
+            - containerPort: 8081
+              name: health
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            limits:
+              cpu: 100m
+              memory: 30Mi
+            requests:
+              cpu: 100m
+              memory: 20Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+      serviceAccountName: ingress-pipy
+      terminationGracePeriodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-pipy
+    app.kubernetes.io/managed-by: Kustomize
+    app.kubernetes.io/name: ingress-pipy
+    app.kubernetes.io/version: 0.2.0
+  name: ingress-pipy-controller
+  namespace: ingress-pipy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: controller
+      app.kubernetes.io/instance: ingress-pipy
+      app.kubernetes.io/name: ingress-pipy
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: controller
+        app.kubernetes.io/instance: ingress-pipy
+        app.kubernetes.io/name: ingress-pipy
+    spec:
+      containers:
+        - args:
+            - -c
+            - cat ${PIPY_CONFIG} && echo "starting ingress-pipy with ${PIPY_CONFIG}..." && /usr/local/bin/pipy ${PIPY_CONFIG} --reuse-port --log-level=debug
+          command:
+            - /bin/sh
+          env:
+            - name: PIPY_CONFIG_PATH
+              value: /ingress
+            - name: PIPY_CONFIG_NAME
+              value: ingress.js
+            - name: PIPY_CONFIG
+              value: $(PIPY_CONFIG_PATH)/$(PIPY_CONFIG_NAME)
+            - name: INGRESS_CONFIG_URL
+              value: http://ingress-pipy-cfg.ingress-pipy.svc:6000/routes
+            - name: INGRESS_VERSION_URL
+              value: http://ingress-pipy-cfg.ingress-pipy.svc:6000/version
+            - name: _pod_ns
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: _pod_nodeName
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: _pod_name
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: _pod_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: _pod_hostIP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          image: flomesh/pipy-pjs:latest
+          imagePullPolicy: Always
+          name: ingress
+          ports:
+            - containerPort: 8000
+              name: ingress
+            - containerPort: 9000
+              name: defbkd
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              add:
+                - NET_BIND_SERVICE
+              drop:
+                - ALL
+            runAsUser: 101
+          volumeMounts:
+            - mountPath: /ingress
+              name: config
+      initContainers:
+        - args:
+            - |-
+              until nc -zvw1 ingress-pipy-cfg.ingress-pipy.svc 6000; \
+                do echo "Waiting for Ingress Config Server ready ..."; \
+                sleep 5; \
+              done;
+          command:
+            - /bin/sh
+            - -c
+          image: busybox:1.32.1
+          imagePullPolicy: IfNotPresent
+          name: init
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+      serviceAccountName: ingress-pipy
+      terminationGracePeriodSeconds: 10
+      volumes:
+        - configMap:
+            name: ingress-config
+          name: config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: manager
+    app.kubernetes.io/instance: ingress-pipy
+    app.kubernetes.io/managed-by: Kustomize
+    app.kubernetes.io/name: ingress-pipy
+    app.kubernetes.io/version: 0.2.0
+    control-plane: ingress-pipy-manager
+  name: ingress-pipy-manager
+  namespace: ingress-pipy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: manager
+      app.kubernetes.io/instance: ingress-pipy
+      app.kubernetes.io/name: ingress-pipy
+      control-plane: ingress-pipy-manager
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: manager
+        app.kubernetes.io/instance: ingress-pipy
+        app.kubernetes.io/name: ingress-pipy
+        control-plane: ingress-pipy-manager
+    spec:
+      containers:
+        - args:
+            - --leader-elect
+          command:
+            - /ingress-manager
+          image: flomesh/ingress-manager:0.2.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          name: manager
+          ports:
+            - containerPort: 9443
+              name: webhook-server
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            limits:
+              cpu: 100m
+              memory: 30Mi
+            requests:
+              cpu: 100m
+              memory: 20Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - mountPath: /tmp/k8s-webhook-server/serving-certs
+              name: cert
+              readOnly: true
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+      serviceAccountName: ingress-pipy
+      terminationGracePeriodSeconds: 10
+      volumes:
+        - name: cert
+          secret:
+            defaultMode: 420
+            secretName: webhook-server-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: serving-cert
+  namespace: ingress-pipy
+spec:
+  dnsNames:
+    - webhook-service.ingress-pipy.svc
+    - webhook-service.ingress-pipy.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: selfsigned-issuer
+  secretName: webhook-server-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned-issuer
+  namespace: ingress-pipy
+spec:
+  selfSigned: {}
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: ingress-pipy/serving-cert
+  name: mutating-webhook-configuration
+webhooks:
+  - admissionReviewVersions:
+      - v1
+      - v1beta1
+    clientConfig:
+      service:
+        name: webhook-service
+        namespace: ingress-pipy
+        path: /mutate-mydummy-polaris-tech-io-v1alpha1-ingressparameter
+    failurePolicy: Fail
+    name: mingressparameter.kb.io
+    rules:
+      - apiGroups:
+          - flomesh.io
+        apiVersions:
+          - v1alpha1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - ingressparameters
+    sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: ingress-pipy/serving-cert
+  name: validating-webhook-configuration
+webhooks:
+  - admissionReviewVersions:
+      - v1
+      - v1beta1
+    clientConfig:
+      service:
+        name: webhook-service
+        namespace: ingress-pipy
+        path: /validate-mydummy-polaris-tech-io-v1alpha1-ingressparameter
+    failurePolicy: Fail
+    name: vingressparameter.kb.io
+    rules:
+      - apiGroups:
+          - flomesh.io
+        apiVersions:
+          - v1alpha1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - ingressparameters
+    sideEffects: None

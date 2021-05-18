@@ -1,0 +1,27 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: pipy
+  annotations:
+    "ingressclass.kubernetes.io/is-default-class": "true"
+spec:
+  controller: flomesh.io/ingress-pipy
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-pipy-bookinfo
+spec:
+  ingressClassName: pipy
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: samples-api-gateway
+                port:
+                  number: 10010
