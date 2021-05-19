@@ -119,23 +119,7 @@ Check out [pipy-operator](https://github.com/flomesh-io/pipy-operator) code, ent
 	flomesh-system   flomesh-pipy-sidecar-injector-69bb969f57-78n2z     1/1     Running           0          16m
 	flomesh-system   flomesh-controller-manager-55fb9565bb-rrhqq        2/2     Running           0          16m
 	```
-
-## Deploy demo
-All YAMLs are in the [kubernetes](kubernetes/) folder, please `cd kubernetes/` in advance.
-
-**First of All**, create a **ProxyProfile** for the demo. A ProxyProfile is a CRD which defines the configuration and routing rules for the [pipy](https://github.com/flomesh-io/pipy) sidecar, please see [proxy-profile.yaml](kubernetes/sidecar/proxy-profile.yaml) for more details.
-```shell
-kubectl apply -f sidecar/proxy-profile.yaml
-```
-
-Check if it's created successfully:
-```shell
-root@k3s:~/flomesh-bookinfo-demo/kubernetes# kubectl get pf
-NAME                         SELECTOR                                                    NAMESPACE   AGE
-proxy-profile-002-bookinfo   {"matchLabels":{"sys":"bookinfo-samples","version":"v1"}}   default     43m
-```
-
-**Second**, install ingress controller(ingress-pipy).
+## Deploy ingress-pipy(Ingress Controller)
 ```shell
 root@bookinfo:/vagrant/kubernetes# kubectl apply -f ingress/ingress-pipy.yaml 
 
@@ -170,7 +154,23 @@ ingress-pipy-controller-76cd866d78-bcmb5   1/1     Running   0          2m58s
 ingress-pipy-manager-6dddc98484-q4ls5      1/1     Running   0          2m58s
 ```
 
-**Third**, you need to have ClickHouse installed somewhere, and create the log table by [init-log.sql](scripts/init-log.sql) in default schema:
+
+## Deploy demo
+All YAMLs are in the [kubernetes](kubernetes/) folder, please `cd kubernetes/` in advance.
+
+**First of All**, create a **ProxyProfile** for the demo. A ProxyProfile is a CRD which defines the configuration and routing rules for the [pipy](https://github.com/flomesh-io/pipy) sidecar, please see [proxy-profile.yaml](kubernetes/sidecar/proxy-profile.yaml) for more details.
+```shell
+kubectl apply -f sidecar/proxy-profile.yaml
+```
+
+Check if it's created successfully:
+```shell
+root@k3s:~/flomesh-bookinfo-demo/kubernetes# kubectl get pf
+NAME                         SELECTOR                                                    NAMESPACE   AGE
+proxy-profile-002-bookinfo   {"matchLabels":{"sys":"bookinfo-samples","version":"v1"}}   default     43m
+```
+
+**Second**, you need to have ClickHouse installed somewhere, and create the log table by [init-log.sql](scripts/init-log.sql) in default schema:
 ```SQL
 CREATE TABLE default.log
 (
@@ -273,7 +273,7 @@ samples-pipy-ingress   Ingress   8080   flomesh/pipy:latest   13m
 
 ## Test rating service:
 
-create ratings in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
+create ratings in k8s, replace the ***ingress IP(10.0.2.15)*** with your real Ingress IP address(or valid DNS name):
 
 ~~~~~bash
 curl -X POST http://10.0.2.15/bookinfo-ratings/ratings \
@@ -281,7 +281,7 @@ curl -X POST http://10.0.2.15/bookinfo-ratings/ratings \
 	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","rating":3}' 
 ~~~~~
 
-query ratings by product_id in kubernetes, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
+query ratings by product_id in kubernetes, replace the ***ingress IP(10.0.2.15)*** with your real Ingress IP address(or valid DNS name):
 
 ~~~~~bash
 curl http://10.0.2.15/bookinfo-ratings/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
@@ -289,7 +289,7 @@ curl http://10.0.2.15/bookinfo-ratings/ratings/a071c269-369c-4f79-be03-6a41f27d6
 
 ## Test review service:
 
-create review in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
+create review in k8s, replace the ***ingress IP(10.0.2.15)*** with your real Ingress IP address(or valid DNS name):
 
 ~~~~~bash
 curl -X POST http://10.0.2.15/bookinfo-reviews/reviews \
@@ -297,7 +297,7 @@ curl -X POST http://10.0.2.15/bookinfo-reviews/reviews \
 	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","review":"This was OK.","rating":3}'
 ~~~~~
 
-query review by product_id in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
+query review by product_id in k8s, replace the ***ingress IP(10.0.2.15)*** with your real Ingress IP address(or valid DNS name):
 
 ~~~~~bash
 curl http://10.0.2.15/bookinfo-reviews/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
@@ -305,7 +305,7 @@ curl http://10.0.2.15/bookinfo-reviews/reviews/a071c269-369c-4f79-be03-6a41f27d6
 
 ## Test detail service
 
- query detail by isbn in k8s, replace the ***ingress-ip*** with your real Ingress IP address(or valid DNS name):
+ query detail by isbn in k8s, replace the ***ingress IP(10.0.2.15)*** with your real Ingress IP address(or valid DNS name):
 
 ~~~~~bash
 curl http://10.0.2.15/bookinfo-details/details/1234567890
