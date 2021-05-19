@@ -95,7 +95,8 @@ spec:
           resources:
             limits:
               memory: 300Mi
-              cpu: 100m
+            requests:
+              memory: 300Mi
 ---
 
 ##################################################################################################
@@ -168,7 +169,8 @@ spec:
         resources:
           limits:
             memory: 300Mi
-            cpu: 100m
+          requests:
+            memory: 300Mi
 ---
 ##################################################################################################
 # Ratings service
@@ -239,8 +241,9 @@ spec:
             value: samples-bookinfo-ratings
         resources:
           limits:
-            memory: 750Mi
-            cpu: 100m
+            memory: 600Mi
+          requests:
+            memory: 600Mi
 ---
 ##################################################################################################
 # Reviews service
@@ -315,8 +318,9 @@ spec:
             value: samples-bookinfo-reviews
         resources:
           limits:
-            memory: 750Mi
-            cpu: 100m
+            memory: 600Mi
+          requests:
+            memory: 600Mi
 ---
 ##################################################################################################
 # Productpage services
