@@ -257,18 +257,14 @@ default          samples-bookinfo-reviews-v1-bb6647cf6-dkf7x        2/2     Runn
 default          samples-bookinfo-ratings-v1-755f99b955-k59zf       2/2     Running     0          90s
 ```
 
-Take a note of your **Ingress Host IP**, and remember the Ingress listens on port **8080** by default.
+Take a note of  **EXTERNAL-IP of ingress-pipy-controller **, and remember the Ingress Controller listens on port **80** by default, please double check the PORT(S) column for the port number.
 ```shell
-root@k3s:~# kubectl get nodes -o wide
-NAME   STATUS   ROLES    AGE   VERSION        INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION     CONTAINER-RUNTIME
-k3s    Ready    master   18h   v1.19.7+k3s1   10.0.2.15     <none>        Ubuntu 20.04.2 LTS   5.4.0-65-generic   containerd://1.4.3-k3s1
-```
-
-If you're not sure about the Ingress port, you can check it by `kubectl get px`:
-```shell
-root@k3s~/flomesh-bookinfo-demo/kubernetes# kubectl get px
-NAME                   MODE      PORT   IMAGE                 AGE
-samples-pipy-ingress   Ingress   8080   flomesh/pipy:latest   13m
+root@bookinfo:/vagrant/kubernetes# kubectl get svc -n ingress-pipy
+NAME                          TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+ingress-pipy-cfg              ClusterIP      10.43.168.156   <none>        6000/TCP       10h
+ingress-pipy-defaultbackend   ClusterIP      10.43.209.193   <none>        80/TCP         10h
+webhook-service               ClusterIP      10.43.146.135   <none>        443/TCP        10h
+ingress-pipy-controller       LoadBalancer   10.43.240.22    10.0.2.15     80:31296/TCP   10h
 ```
 
 ## Test rating service:
