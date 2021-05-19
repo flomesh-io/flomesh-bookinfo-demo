@@ -257,7 +257,7 @@ default          samples-bookinfo-reviews-v1-bb6647cf6-dkf7x        2/2     Runn
 default          samples-bookinfo-ratings-v1-755f99b955-k59zf       2/2     Running     0          90s
 ```
 
-Take a note of  **EXTERNAL-IP of ingress-pipy-controller **, and remember the Ingress Controller listens on port **80** by default, please double check the PORT(S) column for the port number.
+Take a note of  **EXTERNAL-IP** of `ingress-pipy-controller`, and remember the Ingress Controller listens on port **80** by default, please double check the PORT(S) column for the port number.
 ```shell
 root@bookinfo:/vagrant/kubernetes# kubectl get svc -n ingress-pipy
 NAME                          TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
