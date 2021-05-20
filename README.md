@@ -2,6 +2,10 @@
 ![Topology](docs/images/bookinfo-samples-topology.png)
 
 
+# Prerequisites
+- Kubernetes/k3s 1.19+
+- CPU: 2 cores and Memory: 8G is recommanded
+
 # Build
 
 * For config-service, discovery-server, api-gateway, ratings, reviews, details, use mvn to build that
@@ -13,7 +17,7 @@
 * For productpage, it's written in Node.js, you need to have node installed in advance.
 	```shell
 	cd productpage
-    npm install
+    	npm install
 	```
 
 
