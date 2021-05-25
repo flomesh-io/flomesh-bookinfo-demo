@@ -97,6 +97,18 @@ spec:
               memory: 300Mi
             requests:
               memory: 300Mi
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 10000
+            initialDelaySeconds: 30
+            periodSeconds: 60
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 10000
+            initialDelaySeconds: 15
+            periodSeconds: 30
 ---
 
 ##################################################################################################
@@ -171,6 +183,18 @@ spec:
             memory: 300Mi
           requests:
             memory: 300Mi
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8103
+          initialDelaySeconds: 30
+          periodSeconds: 60
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8103
+          initialDelaySeconds: 15
+          periodSeconds: 30
 ---
 ##################################################################################################
 # Ratings service
@@ -244,6 +268,18 @@ spec:
             memory: 600Mi
           requests:
             memory: 600Mi
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8101
+          initialDelaySeconds: 30
+          periodSeconds: 60
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8101
+          initialDelaySeconds: 15
+          periodSeconds: 30
 ---
 ##################################################################################################
 # Reviews service
@@ -321,6 +357,18 @@ spec:
             memory: 600Mi
           requests:
             memory: 600Mi
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8102
+          initialDelaySeconds: 30
+          periodSeconds: 60
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8102
+          initialDelaySeconds: 15
+          periodSeconds: 30
 ---
 ##################################################################################################
 # Productpage services
