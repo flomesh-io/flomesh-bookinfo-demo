@@ -11,7 +11,7 @@ spec:
   config:
     config.tpl: |
       pipy({
-          _BATCH_SIZE: 5,
+          _BATCH_SIZE: 2000,
           _BATCH_TIMEOUT: 5000,
           _CONTENT_TYPES: {
               '': true,
