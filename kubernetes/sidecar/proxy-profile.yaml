@@ -7,9 +7,18 @@ spec:
     matchLabels:
       sys: bookinfo-samples
       version: v1
-  namespace: default
+  namespace: flomesh-spring
+  sidecars:
+    - name: proxy
+      imagePullPolicy: IfNotPresent
+      env:
+      - name: PIPY_TARGET_HTTP_INBOUND_PORT
+        valueFrom:
+          fieldRef:
+            apiVersion: v1
+            fieldPath: metadata.annotations['service.flomesh.io/port']
   config:
-    config.tpl: |
+    proxy.js: |+
       pipy({
           _BATCH_SIZE: 5,
           _BATCH_TIMEOUT: 5000,
@@ -21,6 +30,7 @@ spec:
               'application/xml': true,
               'multipart/form-data': true,
           },
+          _INBOUND_TARGET: '127.0.0.1:' + (os.env.PIPY_TARGET_HTTP_INBOUND_PORT || 8080),
 
           _g: {
               buffer: new Data,
@@ -34,10 +44,13 @@ spec:
           _responseTime: 0,
       })
 
-      .listen({{ .ProxyPort }})
+      .listen(
+        (+os.env.PIPY_TARGET_HTTP_INBOUND_PORT || 8080) +
+        (+os.env.PIPY_LISTEN_HTTP_INBOUND_OFFSET || 10)
+      )
           .onSessionStart(() => _queue = [])
           .fork('in')
-          .connect('127.0.0.1:{{ .TargetPort }}')
+          .connect('127.0.0.1:' + os.env.PIPY_TARGET_HTTP_INBOUND_PORT)
           .fork('out')
 
       // Extract request info
@@ -103,7 +116,7 @@ spec:
           path: '/?query=insert%20into%20log(message)%20format%20JSONAsString',
           //headers: {Authorization: 'Basic dGVzdDp0ZXN0'}
         })
-        .connect('samples-clickhouse.default.svc:8123')
+        .connect('samples-clickhouse.flomesh-spring.svc:8123')
         .decodeHttpResponse()
 
       // Regularly flush the logging session
