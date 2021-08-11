@@ -91,7 +91,8 @@ spec:
             - containerPort: 10000
           env:
             - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
-              value: samples-discovery-server
+#              value: samples-discovery-server
+              value: 127.0.0.1
             - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
               value: "8771"
             - name: K8S_SERVICE_NAME
@@ -181,7 +182,8 @@ spec:
         - containerPort: 8103
         env:
           - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
-            value: samples-discovery-server
+#            value: samples-discovery-server
+            value: 127.0.0.1
           - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
             value: "8771"
           - name: K8S_SERVICE_NAME
@@ -270,7 +272,8 @@ spec:
         - containerPort: 8101
         env:
           - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
-            value: samples-discovery-server
+#            value: samples-discovery-server
+            value: 127.0.0.1
           - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
             value: "8771"
           - name: K8S_SERVICE_NAME
@@ -359,7 +362,8 @@ spec:
         - containerPort: 8102
         env:
           - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
-            value: samples-discovery-server
+#            value: samples-discovery-server
+            value: 127.0.0.1
           - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
             value: "8771"
           - name: K8S_SAMPLES_BOOKINFO_RATINGS_HOSTNAME

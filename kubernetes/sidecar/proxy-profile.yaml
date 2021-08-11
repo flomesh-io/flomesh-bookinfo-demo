@@ -8,8 +8,18 @@ spec:
       sys: bookinfo-samples
       version: v1
   namespace: flomesh-spring
+  serviceEnv:
+    - name: eureka.instance.metadataMap.mesh
+      value: 'true'
   sidecars:
-    - name: proxy
+    - name: logger
+      imagePullPolicy: IfNotPresent
+      env:
+      - name: PIPY_TARGET_LOGGING
+        value: http://192.168.1.101:9000/log
+      - name: PIPY_TARGET_METRICS
+        value: http://192.168.1.101:9000/metrics
+    - name: sidecar
       imagePullPolicy: IfNotPresent
       env:
       - name: PIPY_TARGET_HTTP_INBOUND_PORT
@@ -17,109 +27,929 @@ spec:
           fieldRef:
             apiVersion: v1
             fieldPath: metadata.annotations['service.flomesh.io/port']
+      - name: PIPY_TARGET_EUREKA
+        value: samples-discovery-server.flomesh-spring:8761
+      - name: PIPY_TARGET_LOGGING
+        value: http://192.168.1.101:9000/log
+      - name: PIPY_TARGET_METRICS
+        value: http://192.168.1.101:9000/metrics
+      - name: PIPY_CONFIG
+        value: http://192.168.1.101:9000/config
+      - name: PIPY_SCRIPT
+        value: http://192.168.1.101:9000/scripts
+
   config:
-    proxy.js: |+
+    sidecar.js: |+
+      //
+      // Environment variables:
+      //   PIPY_LISTEN_EUREKA = 8771
+      //   PIPY_TARGET_EUREKA = 127.0.0.1:8761
+      //
+      //   PIPY_LISTEN_HTTP_OUTBOUND = 8081
+      //   PIPY_LISTEN_HTTP_INBOUND_OFFSET = 10
+      //   PIPY_TARGET_HTTP_INBOUND_PORT = 8080
+      //
+      //   PIPY_CONFIG = http://127.0.0.1:9000/config
+      //   PIPY_SCRIPT = http://127.0.0.1:9000/script
+      //   PIPY_LOGGER = http://127.0.0.1:9090/log
+      //
+      // Configuration:
+      //   {
+      //     "inbound": {
+      //     },
+      //     "outbound": {
+      //     }
+      //   }
+      //
+
       pipy({
-          _BATCH_SIZE: 5,
-          _BATCH_TIMEOUT: 5000,
-          _CONTENT_TYPES: {
-              '': true,
-              'text/plain': true,
-              'text/html': true,
-              'application/json': true,
-              'application/xml': true,
-              'multipart/form-data': true,
-          },
-          _INBOUND_TARGET: '127.0.0.1:' + (os.env.PIPY_TARGET_HTTP_INBOUND_PORT || 8080),
+        _LOGGER_URL: new URL(os.env.PIPY_LOGGER || 'http://127.0.0.1:9090/log'),
+        _INBOUND_TARGET: '127.0.0.1:' + (os.env.PIPY_TARGET_HTTP_INBOUND_PORT || 8080),
 
-          _g: {
-              buffer: new Data,
-              bufferSize: 0,
-              bufferTime: 0,
-          },
+        _g: {
+          config: null,
+          autoConnectionID: 0,
+          autoRequestID: 0,
+        },
 
-          _queue: null,
-          _contentType: '',
-          _startTime: 0,
-          _responseTime: 0,
+        _connectionPool: new algo.ResourcePool(
+          () => ++_g.autoConnectionID
+        ),
+
+        _direction: undefined,
+        _context: null,
       })
+
+      //
+      // Outbound traffic
+      //
+
+      .listen(os.env.PIPY_LISTEN_HTTP_OUTBOUND || 8081)
+        .handleSessionStart(
+          () => _direction = 'outbound'
+        )
+        .handleSessionEnd(
+          () => _connectionPool.freeTenant(__inbound.id)
+        )
+        .decodeHttpRequest()
+        .demux('outbound-message')
+        .encodeHttpResponse()
+
+      .pipeline('outbound-message')
+        .handleMessageStart(
+          msg => (
+            _context = msg.context,
+            _context.id = ++_g.autoRequestID
+          )
+        )
+        .fork('log-request')
+        .link('outbound-routing', () => !_context.aborted && !_context.target, 'bypass')
+        .link('outbound-request', () => !_context.aborted, 'bypass')
+        .fork('log-response')
+
+      .pipeline('outbound-routing')
+        .use('eureka.js', 'route')
+
+      .pipeline('outbound-request')
+        .link(
+          'forward', () => _context.target,
+          '404'
+        )
+
+      //
+      // Inbound traffic
+      //
 
       .listen(
         (+os.env.PIPY_TARGET_HTTP_INBOUND_PORT || 8080) +
         (+os.env.PIPY_LISTEN_HTTP_INBOUND_OFFSET || 10)
       )
-          .onSessionStart(() => _queue = [])
-          .fork('in')
-          .connect('127.0.0.1:' + os.env.PIPY_TARGET_HTTP_INBOUND_PORT)
-          .fork('out')
+        .handleSessionStart(
+          () => _direction = 'inbound'
+        )
+        .handleSessionEnd(
+          () => _connectionPool.freeTenant(__inbound.id)
+        )
+        .decodeHttpRequest()
+        .demux('inbound-message')
+        .encodeHttpResponse()
 
-      // Extract request info
-      .pipeline('in')
-      .decodeHttpRequest()
-      .onMessageStart(e => (
-          _startTime = Date.now(),
-          _contentType = e.head.headers['content-type'] || '',
-          _contentType = _contentType.split(';')[0]
-      ))
-      .onMessage(msg => _queue.push({
-          startTime: _startTime,
-          ...msg.head,
-          body: _CONTENT_TYPES[_contentType] ? msg.body.toString() : null,
-      }))
-
-      // Extract response info
-      .pipeline('out')
-      .decodeHttpResponse()
-      .onMessageStart(e => (
-          _responseTime = Date.now(),
-          _contentType = e.head.headers['content-type'] || '',
-          _contentType = _contentType.split(';')[0]
-      ))
-      .replaceMessage(msg => new Message(
-          JSON.encode({
-              ..._queue.shift(),
-              latency: _responseTime - _startTime,
-              endTime: Date.now(),
-              response: {
-                  ...msg.head,
-                  body: _CONTENT_TYPES[_contentType] ? msg.body.toString() : null,
-              },
-          }).push(',')
-      ))
-      .link('batch')
-
-      // Accumulate log messages into batches
-      .pipeline('batch')
-      .replaceMessage(msg => (
-          msg.body.size > 0 && (
-              _g.buffer.push(msg.body),
-              _g.bufferSize++
-          ),
-          (_g.bufferSize >= _BATCH_SIZE ||
-          (_g.bufferSize > 0 && Date.now() - _g.bufferTime > _BATCH_TIMEOUT)) ? (
-              new Message(_g.buffer)
-          ) : (
-              null
+      .pipeline('inbound-message')
+        .handleMessageStart(
+          msg => (
+            _context = msg.context,
+            _context.id = ++_g.autoRequestID
           )
-      ))
-      .onMessageStart(() => (
-          _g.buffer = new Data,
-          _g.bufferSize = 0,
-          _g.bufferTime = Date.now()
-      ))
-      .mux('mux')
+        )
+        .fork('log-request')
+        .link('inbound-routing', () => !_context.aborted && !_context.target, 'bypass')
+        .link('inbound-request', () => !_context.aborted, 'bypass')
+        .fork('log-response')
 
-      // Shared logging session
-      .pipeline('mux')
-        .encodeHttpRequest({
-          method: 'POST',
-          path: '/?query=insert%20into%20log(message)%20format%20JSONAsString',
-          //headers: {Authorization: 'Basic dGVzdDp0ZXN0'}
-        })
-        .connect('samples-clickhouse.flomesh-spring.svc:8123')
+      .pipeline('inbound-routing')
+        .handleMessageStart(
+          () => _context.target = _INBOUND_TARGET
+        )
+
+      .pipeline('inbound-request')
+        .link(
+          'forward', () => _context.target,
+          '404'
+        )
+
+        //
+      // Inbound & Outbound pass to upstream
+      //
+
+      .pipeline('forward')
+        .mux(
+          'connection',
+          () => _connectionPool.allocate(_context.target, __inbound.id)
+        )
+
+      .pipeline('connection')
+        .encodeHttpRequest()
+        .connect(
+          () => _context.target
+        )
         .decodeHttpResponse()
 
-      // Regularly flush the logging session
-      .task('1s')
-        .fork('batch')
+      .pipeline('404')
+        .replaceMessage(
+          new Message(
+            {
+              status: 404,
+              headers: {
+                'content-type': 'text/plain',
+              },
+            },
+            'No service\n'
+          )
+        )
+
+      //
+      // Eureka mock
+      //
+
+      .listen(os.env.PIPY_LISTEN_EUREKA || 8771)
+        .decodeHttpRequest()
+        .use('eureka.js', 'query')
+        .encodeHttpResponse()
+
+      //
+      // Logging
+      //
+
+      .pipeline('log-request')
+        .replaceMessage(
+          msg => (
+            new Message(
+              {
+                method: 'POST',
+                path: `${_LOGGER_URL.path}/http/req/${_context.id}`,
+                headers: {
+                  ...msg.head.headers,
+                  'x-pipy-log': JSON.stringify({
+                    dir: _direction,
+                    protocol: msg.head.protocol,
+                    method: msg.head.method,
+                    path: msg.head.path,
+                    remoteAddr: __inbound.remoteAddress,
+                    remotePort: __inbound.remotePort,
+                    localAddr: __inbound.localAddress,
+                    localPort: __inbound.localPort,
+                    session: __inbound.id,
+                    time: Date.now(),
+                  }),
+                },
+              },
+              msg.body
+            )
+          )
+        )
+        .link('send-log')
+
+      .pipeline('log-response')
+        .replaceMessage(
+          msg => (
+            new Message(
+              {
+                method: 'POST',
+                path: `${_LOGGER_URL.path}/http/res/${_context.id}`,
+                headers: {
+                  ...msg.head.headers,
+                  'x-pipy-log': JSON.stringify({
+                    protocol: msg.head.protocol,
+                    status: msg.head.status,
+                    statusText: msg.head.statusText,
+                    target: _direction === 'outbound' ? _context.target : `${__inbound.localAddress}:${__inbound.localPort}`,
+                    time: Date.now(),
+                  }),
+                },
+              },
+              msg.body
+            )
+          )
+        )
+        .link('send-log')
+
+      .pipeline('send-log')
+        .merge('send-log-connection')
+
+      .pipeline('send-log-connection')
+        .encodeHttpRequest()
+        .connect(
+          () => _LOGGER_URL.host
+        )
+
+      //
+      // Configuration update
+      //
+
+      .task()
+        .replaceMessage(
+          new Message(
+            pipy.store.get('config') || '{}'
+          )
+        )
+        .link('configure')
+
+      .task('5s')
+        .replaceMessage(
+          new Message({
+            url: os.env.PIPY_CONFIG || 'http://127.0.0.1:9000/config',
+          })
+        )
+        .use('update.js', 'update')
+        .link('configure')
+
+      .pipeline('configure')
+        .handleMessage(
+          msg => (
+            ((config) => (
+              config = JSON.decode(msg.body),
+              config ? (
+                _g.config = config,
+                pipy.store.set('config', msg.body.toString()),
+                console.log('Configuration updated.')
+              ) : (
+                console.log('Configuration JSON decoding failed.')
+              )
+            ))()
+          )
+        )
+
+      .pipeline('bypass')
+    logger.js: |+
+      //
+      // Environment variables:
+      //   PIPY_LISTEN_LOGGING = 9090
+      //   PIPY_TARGET_LOGGING = http://127.0.0.1:9000/log
+      //   PIPY_TARGET_METRICS = http://127.0.0.1:9000/metrics
+      //
+      //   PIPY_LOGGING_AUTH = <empty>
+      //   PIPY_METRICS_AUTH = <empty>
+      //
+      //   PIPY_INSTANCE_ID = localhost
+      //   PIPY_SERVICE_NAME = anonymous
+      //
+
+      pipy({
+        _LOGGING_SINK_URL: new URL(os.env.PIPY_TARGET_LOGGING || 'http://127.0.0.1:9000/log'),
+        _METRICS_SINK_URL: new URL(os.env.PIPY_TARGET_METRICS || 'http://127.0.0.1:9000/metrics'),
+        _LOGGING_AUTH_STR: os.env.PIPY_LOGGING_AUTH || undefined,
+        _METRICS_AUTH_STR: os.env.PIPY_METRICS_AUTH || undefined,
+
+        _protocol: undefined,
+
+        _router: new algo.URLRouter({
+          '/log/http/req/*': msg => (
+            msg.head.path = msg.head.path.substring(9),
+            _protocol = 'http'
+          ),
+
+          '/log/http/res/*': msg => (
+            msg.head.path = msg.head.path.substring(9),
+            _protocol = 'http'
+          ),
+
+          '/*': () => _protocol = undefined,
+        }),
+      })
+
+      .listen(os.env.PIPY_LISTEN_LOG || 9090)
+        .decodeHttpRequest()
+        .handleMessageStart(
+          msg => _router.find(msg.head.path)(msg)
+        )
+        .link(
+          'log-http', () => _protocol === 'http',
+          'bypass',
+        )
+        .dummy()
+
+      .pipeline('log-http')
+        .use('log-http.js', 'log')
+        .use('metrics.js', 'count')
+        .merge('batch')
+
+      .pipeline('batch')
+        .pack(
+          1000,
+          {
+            timeout: 5,
+          }
+        )
+        .replaceMessageStart(
+          () => new MessageStart({
+            method: 'POST',
+            path: _LOGGING_SINK_URL.path,
+            headers: {
+              'Host': _LOGGING_SINK_URL.host,
+              'Content-Type': 'application/json',
+              'Authorization': _LOGGING_AUTH_STR,
+            }
+          })
+        )
+        .encodeHttpRequest()
+        .connect(
+          () => _LOGGING_SINK_URL.host,
+          {
+            bufferLimit: '8m',
+          }
+        )
+
+      // Regularly push metrics out
+      .task('5s')
+        .use('metrics.js', 'dump')
+        .merge('send-metrics')
         .replaceMessage(() => new SessionEnd)
+
+      .pipeline('send-metrics')
+        .replaceMessage(
+          msg => new Message(
+            {
+              method: 'POST',
+              path: _METRICS_SINK_URL.path,
+              headers: {
+                'Host': _METRICS_SINK_URL.host,
+                'Content-Type': 'application/json',
+                'Authorization': _METRICS_AUTH_STR,
+              },
+            },
+            msg.body
+          )
+        )
+        .encodeHttpRequest()
+        .connect(
+          () => _METRICS_SINK_URL.host
+        )
+
+      .pipeline('bypass')
+    eureka.js: |+
+
+      pipy({
+        _SERVICE_PORT_OFFSET: +(os.env.PIPY_LISTEN_HTTP_INBOUND_OFFSET || 10),
+        _queue: {},
+        _mapping: {},
+        _services: {},
+        _balancers: {},
+        _range: new Netmask('127.0.0.0/8'),
+
+        _target: undefined,
+      })
+
+        .task()
+        .handleMessageStart(
+          () => (
+            Object.assign(_services, JSON.parse(pipy.store.get('eureka-services') || '{}')),
+            Object.keys(_services).forEach(
+              loopback => _balancers[loopback] = (
+                new algo.RoundRobinLoadBalancer(_services[loopback].targets)
+              )
+            )
+          )
+        )
+
+        .pipeline('query')
+        .onSessionStart(
+          () => (
+            _queue = []
+          )
+        )
+        .onMessage(
+          msg => (
+            _queue.push(msg)
+          )
+        )
+        .encodeHttpRequest()
+        .connect(os.env.PIPY_TARGET_EUREKA || '127.0.0.1:8761')
+        .decodeHttpResponse({ decompress: true })
+        .replaceMessage(
+          (
+            msg,
+            body, //res
+            reqHead, // request head
+            data,
+            name,
+            targets,
+            loopback,
+          ) => (
+            reqHead = _queue.shift()?.head,
+            msg.head.headers['content-encoding'] = '*', // indicate downsream decompression unnecessary
+            (reqHead?.path == '/eureka/apps/' || reqHead?.path == '/eureka/apps' || reqHead?.path.startsWith('/eureka/apps/?')) && reqHead?.headers?.accept?.startsWith('application/json') && reqHead?.method == 'GET' ? (
+              body = msg.body,
+              data = JSON.decode(body),
+              data?.applications?.application?.forEach(
+                //application
+                a => (
+                  targets = null,
+                  loopback = null,
+                  name = a.name.toLowerCase(),
+                  loopback = _mapping[name],
+                  loopback || (
+                    loopback = _range.next(),
+                    _mapping[name] = loopback
+                  ),
+                  targets = a.instance?.filter(
+                    k => k.metadata?.mesh == 'true'
+                  ).map?.(
+                    //port offset
+                    i => `${i.ipAddr}:${+i.port.$ + _SERVICE_PORT_OFFSET}`
+                  ),
+                  targets.length == 0 || (
+                    _services[loopback] = { name, targets },
+                    _balancers[loopback] = new algo.RoundRobinLoadBalancer(targets),
+                    pipy.store.set('eureka-services', JSON.stringify(_services)),
+                    a.instance?.filter(
+                      k => k.metadata?.mesh == 'true'
+                    ).forEach(
+                      //instance
+                      i => (
+                        i.port.$ = (os.env.PIPY_HTTP_LISTEN_OUTBOUND | 0) || 8081,
+                        i.hostName = loopback,
+                        i.ipAddr = loopback
+                      )
+                    )
+                  )
+                ),
+              ),
+              new Message(msg.head, JSON.encode(data))
+            ) : (
+              new Message(msg.head, msg.body)
+            )
+          )
+        )
+
+        .pipeline('route')
+        .handleMessageStart(
+          msg => (
+            _target = _target || (
+              _balancers[__inbound.localAddress]?.select?.() || ''
+            ),
+            msg.context.service = _services[__inbound.localAddress]?.name,
+            msg.context.target = _target
+          )
+        )
+    log-http.js: |+
+      //
+      // Environment variables:
+      //   PIPY_INSTANCE_ID = localhost
+      //   PIPY_SERVICE_NAME = anonymous
+      //
+      // Log output:
+      //   {
+      //     "rid": 0,           // <- request ID
+      //     "sid": 0,           // <- session ID
+      //     "iid": "localhost", // <- instance ID
+      //     "dir": "inbound",   // <- direction
+      //     "proto": "http",
+      //     "req": {
+      //       "protocol": "HTTP/1.1",
+      //       "method": "GET",
+      //       "path": "/",
+      //       "headers": {
+      //         "content-type": "application/json"
+      //       },
+      //       "body": null,
+      //     },
+      //     "res": {
+      //       "protocol": "HTTP/1.1",
+      //       "status": 200,
+      //       "statusText": "OK",
+      //       "headers": {
+      //         "content-type": "application/json"
+      //       },
+      //       "body": null
+      //     },
+      //     "reqTime": 1622979167297,
+      //     "resTime": 1622979177971,
+      //     "reqSize": 1000,
+      //     "resSize": 2000,
+      //     "remoteAddr": "192.168.0.200",
+      //     "remotePort": 12345,
+      //     "localAddr": "192.168.0.100",
+      //     "localPort": 8080,
+      //     "node": {
+      //       "ip": "127.0.0.1",
+      //       "name": "localhost"
+      //     },
+      //     "pod": {
+      //       "ns": "default",
+      //       "ip": "127.0.0.1",
+      //       "name": "localhost"
+      //     },
+      //     "service": {
+      //       "name": "anonymous"
+      //     },
+      //     "target": {
+      //       "address": "192.168.0.123",
+      //       "port": 20880
+      //     },
+      //     "trace": {
+      //       "id": "xxx"
+      //       "span": "xxx"
+      //       "parent": "xxx"
+      //       "sampled": "xxx"
+      //     }
+      //   }
+      //
+      // Metrics output:
+      //   {
+      //     "status": {
+      //       "http": {},
+      //     },
+      //     "latency": {
+      //       "http": {
+      //         "inbound": {
+      //           "p90": 0,
+      //           "p95": 0,
+      //           "p99": 0
+      //         },
+      //         "outbound": {
+      //           "p90": 0,
+      //           "p95": 0,
+      //           "p99": 0
+      //         }
+      //       },
+      //       "dubbo": {
+      //         "inbound": {
+      //           "p90": 0,
+      //           "p95": 0,
+      //           "p99": 0
+      //         },
+      //         "outbound": {
+      //           "p90": 0,
+      //           "p95": 0,
+      //           "p99": 0
+      //         }
+      //       }
+      //     }
+      //   }
+      //
+
+      pipy({
+        _INSTANCE_ID: os.env.PIPY_INSTANCE_ID || 'localhost',
+
+        _SERVICE_INFO: {
+          name: os.env.PIPY_SERVICE_NAME || 'anonymous',
+        },
+
+        _NODE_INFO: {
+          ip: os.env._pod_hostIP || '127.0.0.1',
+          name: os.env._pod_nodeName || 'localhost',
+        },
+
+        _POD_INFO: {
+          ns: os.env._pod_ns || 'default',
+          ip: os.env._pod_IP || '127.0.0.1',
+          name: os.env._pod_name || os.env.HOSTNAME || 'localhost',
+        },
+
+        _CONTENT_TYPES: {
+          '': true,
+          'text/plain': true,
+          'text/html': true,
+          'application/json': true,
+          'application/xml': true,
+          'multipart/form-data': true,
+        },
+
+        _requests: new algo.Cache(10000),
+        _responses: new algo.Cache(10000),
+        _contentEncoding: null,
+
+        _router: new algo.URLRouter({
+          '/req/*': msg => (
+            ((
+              id
+            ) => (
+              id = msg.head.path.substring(5),
+              _requests.set(id, msg),
+              _combine(id)
+            ))()
+          ),
+
+          '/res/*': msg => (
+            ((
+              id
+            ) => (
+              id = msg.head.path.substring(5),
+              _responses.set(id, msg),
+              _combine(id)
+            ))()
+          ),
+
+          '/*': () => null,
+        }),
+
+        _combine: (id) => (
+          ((
+            dir, status,
+            req, reqInfo, reqHeaders, reqTime, reqType, reqLogBody,
+            res, resInfo, resHeaders, resTime, resType, resLogBody,
+          ) => (
+            req = _requests.get(id),
+            res = _responses.get(id),
+            req && res ? (
+              _requests.remove(id),
+              _responses.remove(id),
+              reqHeaders = req.head.headers,
+              resHeaders = res.head.headers,
+              reqInfo = JSON.parse(reqHeaders['x-pipy-log']),
+              resInfo = JSON.parse(resHeaders['x-pipy-log']),
+              delete reqHeaders['x-pipy-log'],
+              delete resHeaders['x-pipy-log'],
+              reqTime = reqInfo.time,
+              resTime = resInfo.time,
+              reqType = reqHeaders['content-type']?.split?.(';')?.[0],
+              resType = resHeaders['content-type']?.split?.(';')?.[0],
+              reqLogBody = Boolean(_CONTENT_TYPES[reqType]),
+              resLogBody = Boolean(_CONTENT_TYPES[resType]),
+              dir = reqInfo.dir,
+              status = resInfo.status,
+              new Message(
+                {
+                  metrics: {
+                    proto: 'http',
+                    status,
+                    latency: resTime - reqTime,
+                  },
+                },
+                JSON.encode({
+                  rid: +id,
+                  sid: reqInfo.session,
+                  iid: _INSTANCE_ID,
+                  dir,
+                  proto: 'http',
+                  req: {
+                    protocol: reqInfo.protocol,
+                    method: reqInfo.method,
+                    path: reqInfo.path,
+                    headers: reqHeaders,
+                    body: reqLogBody ? req.body.toString() : undefined,
+                  },
+                  res: {
+                    protocol: resInfo.protocol,
+                    status,
+                    statusText: resInfo.statusText,
+                    headers: resHeaders,
+                    body: resLogBody ? res.body.toString() : undefined,
+                  },
+                  reqTime,
+                  resTime,
+                  reqSize: reqInfo.size,
+                  resSize: resInfo.size,
+                  remoteAddr: reqInfo.remoteAddr,
+                  remotePort: reqInfo.remotePort,
+                  localAddr: reqInfo.localAddr,
+                  localPort: reqInfo.localPort,
+                  target: reqInfo.target,
+                  node: _NODE_INFO,
+                  pod: _POD_INFO,
+                  service: _SERVICE_INFO,
+                  trace: {
+                    id: reqHeaders['x-b3-traceid'],
+                    span: reqHeaders['x-b3-spanid'],
+                    parent: reqHeaders['x-b3-parentspanid'],
+                    sampled: reqHeaders['x-b3-sampled'],
+                  },
+                }).push('\n')
+              )
+            ) : null
+          ))()
+        ),
+      })
+
+      .pipeline('log')
+        .onMessageStart(
+          msg => _contentEncoding = msg.head.headers['content-encoding']
+        )
+        .link(
+          'decompress', () => _contentEncoding === 'gzip',
+          'bypass'
+        )
+        .replaceMessage(
+          msg => _router.find(msg.head.path)(msg)
+        )
+
+      .pipeline('decompress')
+        .decompressMessageBody('inflate')
+
+      .pipeline('bypass')
+    metrics.js: |+
+      //
+      // Metrics output:
+      //   {
+      //     "status": {
+      //       "http": {},
+      //     },
+      //     "latency": {
+      //       "http": {
+      //         "inbound": {
+      //           "p90": 0,
+      //           "p95": 0,
+      //           "p99": 0
+      //         },
+      //         "outbound": {
+      //           "p90": 0,
+      //           "p95": 0,
+      //           "p99": 0
+      //         }
+      //       }
+      //     }
+      //   }
+
+      pipy({
+        _LATENCY_BUCKETS: [
+          1,2,5,7,10,15,20,25,30,40,50,60,70,80,90,100,
+          200,300,400,500,1000,2000,5000,10000,30000,60000,
+        ],
+
+        _statuses: {},
+        _latencies: {},
+      })
+
+      .pipeline('count')
+        .handleMessageStart(
+          msg => (
+            ((
+              metrics,
+              proto,
+              dir,
+              status,
+              latency,
+              statuses,
+              latencies,
+            ) => (
+              metrics = msg.head.metrics,
+              proto = metrics.proto,
+              dir = metrics.dir,
+              status = metrics.status,
+              latency = metrics.latency,
+              statuses = _statuses[proto] || (_statuses[proto] = {}),
+              statuses[status] = (statuses[status]|0) + 1,
+              latencies = _latencies[proto] || (_latencies[proto] = {}),
+              latencies = latencies[dir] || (latencies[dir] = new algo.Percentile(_LATENCY_BUCKETS)),
+              latencies.score(latency)
+            ))()
+          )
+        )
+
+      .pipeline('dump')
+        .replaceMessage(
+          () => new Message(
+            JSON.encode({
+              status: _statuses,
+            })
+          )
+        )
+        .handleMessage(
+          () => (
+            delete _statuses.http,
+            delete _latencies.http
+          )
+        )
+    update.js: |+
+      pipy({
+        _etags: JSON.parse(pipy.store.get('etags') || '') || {},
+        _pathname: '',
+        _url: null,
+        _updated: false,
+      })
+
+      .pipeline('update')
+        .handleMessageStart(
+          msg => (
+            _pathname = msg.head.url,
+            _pathname.startsWith('http://') && (
+              _url = new URL(_pathname)
+            )
+          )
+        )
+        .link(
+          'check-http', () => _url,
+          'check-file'
+        )
+
+      // Check version of file
+      .pipeline('check-file')
+        .replaceMessageStart(
+          () => (
+            ((version) => (
+              version = os.stat(_pathname)?.mtime | 0,
+              version === _etags[_pathname] ? (
+                new SessionEnd
+              ) : (
+                _etags[_pathname] = version,
+                pipy.store.set('etags', JSON.stringify(_etags)),
+                console.log(`Updating ${_pathname}...`),
+                [
+                  new Message(
+                    {
+                      status: 200,
+                      statusText: 'OK',
+                      headers: {
+                        etag: version,
+                      },
+                    },
+                    os.readFile(_pathname)
+                  ),
+                  new SessionEnd
+                ]
+              )
+            ))()
+          )
+        )
+
+      // Check version via HTTP
+      .pipeline('check-http')
+        .replaceMessage(
+          () => (
+            new Message({
+              method: 'HEAD',
+              path: _url.path,
+              headers: {
+                Host: _url.host,
+              },
+            }, null)
+          )
+        )
+        .encodeHttpRequest()
+        .connect(
+          () => _url.host
+        )
+        // .decodeHttpBodilessResponse()
+        .handleMessageStart(
+          msg => (
+            msg.head.status === 200 && (
+              ((version) => (
+                version = msg.head.headers.etag,
+                version !== _etags[_url.href] && (
+                  _updated = true,
+                  _etags[_url.href] = version,
+                  pipy.store.set('etags', JSON.stringify(_etags))
+                )
+              ))()
+            )
+          )
+        )
+        .link(
+          'update-http', () => _updated,
+          'end-of-session'
+        )
+
+      // Update from HTTP
+      .pipeline('update-http')
+        .replaceMessage(
+          () => (
+            console.log(`Updating ${_url.href}...`),
+            new Message({
+              method: 'GET',
+              path: _url.path,
+              headers: {
+                Host: _url.host,
+              },
+            }, null)
+          )
+        )
+        .encodeHttpRequest()
+        .connect(
+          () => _url.host
+        )
+        .decodeHttpResponse()
+        .replaceMessage(
+          msg => (
+            msg.head.status === 200 ? [
+              msg,
+              new SessionEnd
+            ] : (
+              console.log('Updating failed, status code =', msg.head.status),
+              new SessionEnd
+            )
+          )
+        )
+
+      // End of task
+      .pipeline('end-of-session')
+        .replaceMessage(new SessionEnd)
