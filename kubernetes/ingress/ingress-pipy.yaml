@@ -467,7 +467,7 @@ data:
         path: '/?query=insert%20into%20log(message)%20format%20JSONAsString',
         //headers: {Authorization: 'Basic dGVzdDp0ZXN0'}
       })
-      .connect('samples-clickhouse.default.svc:8123')
+      .connect('samples-clickhouse.flomesh-spring.svc:8123')
       .decodeHttpResponse()
 
     // Regularly flush the logging session

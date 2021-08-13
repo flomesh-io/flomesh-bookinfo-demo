@@ -31,11 +31,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: samples-api-gateway
+  name: samples-api-gateway-v2
   namespace: flomesh-spring
   labels:
     app: gateway
-    service: samples-api-gateway
+    service: samples-api-gateway-v2
 spec:
   ports:
     - port: 10000
@@ -46,26 +46,27 @@ spec:
       targetPort: 10010
   selector:
     app: gateway
+    version: v2
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: samples-api-gateway-v1
+  name: samples-api-gateway-v2
   namespace: flomesh-spring
   labels:
     app: gateway
-    version: v1
+    version: v2
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: gateway
-      version: v1
+      version: v2
   template:
     metadata:
       labels:
         app: gateway
-        version: v1
+        version: v2
         service: samples-api-gateway
         sys: bookinfo-samples
       annotations:
@@ -91,10 +92,9 @@ spec:
             - containerPort: 10000
           env:
             - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
-#              value: samples-discovery-server
-              value: 127.0.0.1
+              value: samples-discovery-server
             - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
-              value: "8771"
+              value: "8761"
             - name: K8S_SERVICE_NAME
               value: samples-api-gateway
           resources:
@@ -141,22 +141,22 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: samples-bookinfo-details-v1
+  name: samples-bookinfo-details-v2
   namespace: flomesh-spring
   labels:
     app: details
-    version: v1
+    version: v2
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: details
-      version: v1
+      version: v2
   template:
     metadata:
       labels:
         app: details
-        version: v1
+        version: v2
         service: samples-bookinfo-details
         sys: bookinfo-samples
       annotations:
@@ -182,10 +182,9 @@ spec:
         - containerPort: 8103
         env:
           - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
-#            value: samples-discovery-server
-            value: 127.0.0.1
+            value: samples-discovery-server
           - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
-            value: "8771"
+            value: "8761"
           - name: K8S_SERVICE_NAME
             value: samples-bookinfo-details
         resources:
@@ -231,22 +230,22 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: samples-bookinfo-ratings-v1
+  name: samples-bookinfo-ratings-v2
   namespace: flomesh-spring
   labels:
     app: ratings
-    version: v1
+    version: v2
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: ratings
-      version: v1
+      version: v2
   template:
     metadata:
       labels:
         app: ratings
-        version: v1
+        version: v2
         service: samples-bookinfo-ratings
         sys: bookinfo-samples
       annotations:
@@ -272,10 +271,9 @@ spec:
         - containerPort: 8101
         env:
           - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
-#            value: samples-discovery-server
-            value: 127.0.0.1
+            value: samples-discovery-server
           - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
-            value: "8771"
+            value: "8761"
           - name: K8S_SERVICE_NAME
             value: samples-bookinfo-ratings
         resources:
@@ -321,22 +319,22 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: samples-bookinfo-reviews-v1
+  name: samples-bookinfo-reviews-v2
   namespace: flomesh-spring
   labels:
     app: reviews
-    version: v1
+    version: v2
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: reviews
-      version: v1
+      version: v2
   template:
     metadata:
       labels:
         app: reviews
-        version: v1
+        version: v2
         service: samples-bookinfo-reviews
         sys: bookinfo-samples
       annotations:
@@ -362,10 +360,9 @@ spec:
         - containerPort: 8102
         env:
           - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
-#            value: samples-discovery-server
-            value: 127.0.0.1
+            value: samples-discovery-server
           - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
-            value: "8771"
+            value: "8761"
           - name: K8S_SAMPLES_BOOKINFO_RATINGS_HOSTNAME
             value: samples-bookinfo-ratings
           - name: K8S_SAMPLES_BOOKINFO_RATINGS_PORT
@@ -415,21 +412,21 @@ spec:
 #apiVersion: apps/v1
 #kind: Deployment
 #metadata:
-#  name: samples-bookinfo-productpage-v1
+#  name: samples-bookinfo-productpage-v2
 #  labels:
 #    app: productpage
-#    version: v1
+#    version: v2
 #spec:
 #  replicas: 1
 #  selector:
 #    matchLabels:
 #      app: productpage
-#      version: v1
+#      version: v2
 #  template:
 #    metadata:
 #      labels:
 #        app: productpage
-#        version: v1
+#        version: v2
 #        service: samples-bookinfo-productpage
 #        sys: bookinfo-samples
 #      annotations:

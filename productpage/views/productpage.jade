@@ -32,33 +32,37 @@ block content
 
         h4.text-center.text-primary Book Details
         dl
-          dt Type:
-          | #{details.type}
+          dt Title:
+          | #{details.title}
+          dt Author:
+          | #{details.author}
           dt Pages:
-          | #{details.pages}
+          | #{details.pageCount}
+          dt Print Type
+          | #{details.printType}
+          dt Year:
+          | #{details.year}
           dt Publisher:
           | #{details.publisher}
           dt Language:
           | #{details.language}
           dt ISBN-10:
-          | #{details['ISBN-10']}
-          dt ISBN-13:
-          | #{details['ISBN-13']}
+          | #{details.isbn}
 
       .col-md-6
 
         h4.text-center.text-primary Book Reviews
-        each review in reviews.reviews
+        each review in reviews
           blockquote
-            p=review.text
-            small=review.reviewer
+            p=review.review
+            small=review.reviewerId
             if review.rating
               p
                 font(color=review.rating.color)
-                  - for (var i = 0; i < review.rating.stars; ++i) {
+                  - for (var i = 0; i < review.rating; ++i) {
                     span.glyphicon.glyphicon-star
                   - }
-                  - for (var i = 0; i < 5 - review.rating.stars; ++i) {
+                  - for (var i = 0; i < 5 - review.rating; ++i) {
                     span.glyphicon.glyphicon-star-empty
                   - }
             else if review.error

@@ -6,19 +6,35 @@ spec:
   selector:
     matchLabels:
       sys: bookinfo-samples
-      version: v1
+#      version: v1
   namespace: flomesh-spring
   serviceEnv:
     - name: eureka.instance.metadataMap.mesh
       value: 'true'
+    - name: eureka.instance.metadataMap.version
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: metadata.labels['version']
+    - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
+      value: '127.0.0.1'
+    - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
+      value: "8771"
   sidecars:
     - name: logger
       imagePullPolicy: IfNotPresent
       env:
-      - name: PIPY_TARGET_LOGGING
-        value: http://192.168.1.101:9000/log
-      - name: PIPY_TARGET_METRICS
-        value: http://192.168.1.101:9000/metrics
+      - name: PIPY_SERVICE_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.annotations['service.flomesh.io/name']
+      - name: PIPY_LOG_SINK
+        value: "http://samples-clickhouse.flomesh-spring.svc:8123/?query=insert%20into%20log(message)%20format%20JSONAsString"
+      - name: PIPY_METRICS_SINK
+#        value: "http://sample-metrics.flomesh-spring.svc:9001/services/$(PIPY_SERVICE_NAME)/metrics"
+        value: "http://samples-metrics.flomesh-spring.svc:9001/metrics"
+      - name: PIPY_LOGGER_LISTEN
+        value: "9090"
     - name: sidecar
       imagePullPolicy: IfNotPresent
       env:
@@ -27,16 +43,13 @@ spec:
           fieldRef:
             apiVersion: v1
             fieldPath: metadata.annotations['service.flomesh.io/port']
+      - name: SERVICE_VERSION
+        valueFrom:
+          fieldRef:
+            apiVersion: v1
+            fieldPath: metadata.labels['version']
       - name: PIPY_TARGET_EUREKA
         value: samples-discovery-server.flomesh-spring:8761
-      - name: PIPY_TARGET_LOGGING
-        value: http://192.168.1.101:9000/log
-      - name: PIPY_TARGET_METRICS
-        value: http://192.168.1.101:9000/metrics
-      - name: PIPY_CONFIG
-        value: http://192.168.1.101:9000/config
-      - name: PIPY_SCRIPT
-        value: http://192.168.1.101:9000/scripts
 
   config:
     sidecar.js: |+
@@ -98,6 +111,7 @@ spec:
       .pipeline('outbound-message')
         .handleMessageStart(
           msg => (
+            console.log('out-going'),
             _context = msg.context,
             _context.id = ++_g.autoRequestID
           )
@@ -203,10 +217,11 @@ spec:
       .pipeline('log-request')
         .replaceMessage(
           msg => (
+            console.log('log-request'),
             new Message(
               {
                 method: 'POST',
-                path: `${_LOGGER_URL.path}/http/req/${_context.id}`,
+                path: `${_LOGGER_URL.path}/req/${_context.id}`,
                 headers: {
                   ...msg.head.headers,
                   'x-pipy-log': JSON.stringify({
@@ -235,7 +250,7 @@ spec:
             new Message(
               {
                 method: 'POST',
-                path: `${_LOGGER_URL.path}/http/res/${_context.id}`,
+                path: `${_LOGGER_URL.path}/res/${_context.id}`,
                 headers: {
                   ...msg.head.headers,
                   'x-pipy-log': JSON.stringify({
@@ -274,14 +289,14 @@ spec:
         )
         .link('configure')
 
-      .task('5s')
-        .replaceMessage(
-          new Message({
-            url: os.env.PIPY_CONFIG || 'http://127.0.0.1:9000/config',
-          })
-        )
-        .use('update.js', 'update')
-        .link('configure')
+      // .task('5s')
+      //   .replaceMessage(
+      //     new Message({
+      //       url: os.env.PIPY_CONFIG || 'http://127.0.0.1:9000/config',
+      //     })
+      //   )
+      //   .use('update.js', 'update')
+      //   .link('configure')
 
       .pipeline('configure')
         .handleMessage(
@@ -303,221 +318,14 @@ spec:
     logger.js: |+
       //
       // Environment variables:
-      //   PIPY_LISTEN_LOGGING = 9090
-      //   PIPY_TARGET_LOGGING = http://127.0.0.1:9000/log
-      //   PIPY_TARGET_METRICS = http://127.0.0.1:9000/metrics
-      //
-      //   PIPY_LOGGING_AUTH = <empty>
-      //   PIPY_METRICS_AUTH = <empty>
-      //
+      //   PIPY_LOGGER_LISTEN = 9090
       //   PIPY_INSTANCE_ID = localhost
       //   PIPY_SERVICE_NAME = anonymous
+      //   PIPY_LOG_SINK = http://127.0.0.1:9000/log
+      //   PIPY_LOG_AUTH = <empty>
+      //   PIPY_METRICS_SINK = http://127.0.0.1:9000/metrics
       //
-
-      pipy({
-        _LOGGING_SINK_URL: new URL(os.env.PIPY_TARGET_LOGGING || 'http://127.0.0.1:9000/log'),
-        _METRICS_SINK_URL: new URL(os.env.PIPY_TARGET_METRICS || 'http://127.0.0.1:9000/metrics'),
-        _LOGGING_AUTH_STR: os.env.PIPY_LOGGING_AUTH || undefined,
-        _METRICS_AUTH_STR: os.env.PIPY_METRICS_AUTH || undefined,
-
-        _protocol: undefined,
-
-        _router: new algo.URLRouter({
-          '/log/http/req/*': msg => (
-            msg.head.path = msg.head.path.substring(9),
-            _protocol = 'http'
-          ),
-
-          '/log/http/res/*': msg => (
-            msg.head.path = msg.head.path.substring(9),
-            _protocol = 'http'
-          ),
-
-          '/*': () => _protocol = undefined,
-        }),
-      })
-
-      .listen(os.env.PIPY_LISTEN_LOG || 9090)
-        .decodeHttpRequest()
-        .handleMessageStart(
-          msg => _router.find(msg.head.path)(msg)
-        )
-        .link(
-          'log-http', () => _protocol === 'http',
-          'bypass',
-        )
-        .dummy()
-
-      .pipeline('log-http')
-        .use('log-http.js', 'log')
-        .use('metrics.js', 'count')
-        .merge('batch')
-
-      .pipeline('batch')
-        .pack(
-          1000,
-          {
-            timeout: 5,
-          }
-        )
-        .replaceMessageStart(
-          () => new MessageStart({
-            method: 'POST',
-            path: _LOGGING_SINK_URL.path,
-            headers: {
-              'Host': _LOGGING_SINK_URL.host,
-              'Content-Type': 'application/json',
-              'Authorization': _LOGGING_AUTH_STR,
-            }
-          })
-        )
-        .encodeHttpRequest()
-        .connect(
-          () => _LOGGING_SINK_URL.host,
-          {
-            bufferLimit: '8m',
-          }
-        )
-
-      // Regularly push metrics out
-      .task('5s')
-        .use('metrics.js', 'dump')
-        .merge('send-metrics')
-        .replaceMessage(() => new SessionEnd)
-
-      .pipeline('send-metrics')
-        .replaceMessage(
-          msg => new Message(
-            {
-              method: 'POST',
-              path: _METRICS_SINK_URL.path,
-              headers: {
-                'Host': _METRICS_SINK_URL.host,
-                'Content-Type': 'application/json',
-                'Authorization': _METRICS_AUTH_STR,
-              },
-            },
-            msg.body
-          )
-        )
-        .encodeHttpRequest()
-        .connect(
-          () => _METRICS_SINK_URL.host
-        )
-
-      .pipeline('bypass')
-    eureka.js: |+
-
-      pipy({
-        _SERVICE_PORT_OFFSET: +(os.env.PIPY_LISTEN_HTTP_INBOUND_OFFSET || 10),
-        _queue: {},
-        _mapping: {},
-        _services: {},
-        _balancers: {},
-        _range: new Netmask('127.0.0.0/8'),
-
-        _target: undefined,
-      })
-
-        .task()
-        .handleMessageStart(
-          () => (
-            Object.assign(_services, JSON.parse(pipy.store.get('eureka-services') || '{}')),
-            Object.keys(_services).forEach(
-              loopback => _balancers[loopback] = (
-                new algo.RoundRobinLoadBalancer(_services[loopback].targets)
-              )
-            )
-          )
-        )
-
-        .pipeline('query')
-        .onSessionStart(
-          () => (
-            _queue = []
-          )
-        )
-        .onMessage(
-          msg => (
-            _queue.push(msg)
-          )
-        )
-        .encodeHttpRequest()
-        .connect(os.env.PIPY_TARGET_EUREKA || '127.0.0.1:8761')
-        .decodeHttpResponse({ decompress: true })
-        .replaceMessage(
-          (
-            msg,
-            body, //res
-            reqHead, // request head
-            data,
-            name,
-            targets,
-            loopback,
-          ) => (
-            reqHead = _queue.shift()?.head,
-            msg.head.headers['content-encoding'] = '*', // indicate downsream decompression unnecessary
-            (reqHead?.path == '/eureka/apps/' || reqHead?.path == '/eureka/apps' || reqHead?.path.startsWith('/eureka/apps/?')) && reqHead?.headers?.accept?.startsWith('application/json') && reqHead?.method == 'GET' ? (
-              body = msg.body,
-              data = JSON.decode(body),
-              data?.applications?.application?.forEach(
-                //application
-                a => (
-                  targets = null,
-                  loopback = null,
-                  name = a.name.toLowerCase(),
-                  loopback = _mapping[name],
-                  loopback || (
-                    loopback = _range.next(),
-                    _mapping[name] = loopback
-                  ),
-                  targets = a.instance?.filter(
-                    k => k.metadata?.mesh == 'true'
-                  ).map?.(
-                    //port offset
-                    i => `${i.ipAddr}:${+i.port.$ + _SERVICE_PORT_OFFSET}`
-                  ),
-                  targets.length == 0 || (
-                    _services[loopback] = { name, targets },
-                    _balancers[loopback] = new algo.RoundRobinLoadBalancer(targets),
-                    pipy.store.set('eureka-services', JSON.stringify(_services)),
-                    a.instance?.filter(
-                      k => k.metadata?.mesh == 'true'
-                    ).forEach(
-                      //instance
-                      i => (
-                        i.port.$ = (os.env.PIPY_HTTP_LISTEN_OUTBOUND | 0) || 8081,
-                        i.hostName = loopback,
-                        i.ipAddr = loopback
-                      )
-                    )
-                  )
-                ),
-              ),
-              new Message(msg.head, JSON.encode(data))
-            ) : (
-              new Message(msg.head, msg.body)
-            )
-          )
-        )
-
-        .pipeline('route')
-        .handleMessageStart(
-          msg => (
-            _target = _target || (
-              _balancers[__inbound.localAddress]?.select?.() || ''
-            ),
-            msg.context.service = _services[__inbound.localAddress]?.name,
-            msg.context.target = _target
-          )
-        )
-    log-http.js: |+
-      //
-      // Environment variables:
-      //   PIPY_INSTANCE_ID = localhost
-      //   PIPY_SERVICE_NAME = anonymous
-      //
-      // Log output:
+      // HTTP log output:
       //   {
       //     "rid": 0,           // <- request ID
       //     "sid": 0,           // <- session ID
@@ -574,10 +382,64 @@ spec:
       //     }
       //   }
       //
+      // Dubbo log output:
+      //   {
+      //     "rid": 0,           // <- request ID
+      //     "sid": 0,           // <- session ID
+      //     "iid": "localhost", // <- instance ID
+      //     "dir": "inbound",   // <- direction
+      //     "proto": "dubbo",
+      //     "req": {
+      //       "id": "123",
+      //       "version": "2.0.2",
+      //       "service.name": "com.service.MyService",
+      //       "service.version": "1.0.0"
+      //       "method.name": "sayHello",
+      //       "method.type": "Ljava/lang/String;"
+      //       "arguments": [ ... ],
+      //       "attachments": {}
+      //     },
+      //     "res": {
+      //       "type": 0,
+      //       "value": "Hello!"
+      //     },
+      //     "reqTime": 1622979167297,
+      //     "resTime": 1622979177971,
+      //     "reqSize": 1000,
+      //     "resSize": 2000,
+      //     "remoteAddr": "192.168.0.200",
+      //     "remotePort": 12345,
+      //     "localAddr": "192.168.0.100",
+      //     "localPort": 20880,
+      //     "node": {
+      //       "ip": "127.0.0.1",
+      //       "name": "localhost"
+      //     },
+      //     "pod": {
+      //       "ns": "default",
+      //       "ip": "127.0.0.1",
+      //       "name": "localhost"
+      //     },
+      //     "service": {
+      //       "name": "anonymous"
+      //     },
+      //     "target": {
+      //       "address": "192.168.0.123",
+      //       "port": 20880
+      //     },
+      //     "trace": {
+      //       "id": "xxx"
+      //       "span": "xxx"
+      //       "parent": "xxx"
+      //       "sampled": "xxx"
+      //     }
+      //   }
+      //
       // Metrics output:
       //   {
       //     "status": {
       //       "http": {},
+      //       "dubbo": {}
       //     },
       //     "latency": {
       //       "http": {
@@ -609,7 +471,10 @@ spec:
       //
 
       pipy({
-        _INSTANCE_ID: os.env.PIPY_INSTANCE_ID || 'localhost',
+        _INSTANCE_ID: os.env.PIPY_INSTANCE_ID || os.env._pod_UID || 'localhost',
+        _LOG_AUTH: os.env.PIPY_LOG_AUTH || undefined,
+        _LOG_SINK_URL: new URL(os.env.PIPY_LOG_SINK || 'http://127.0.0.1:8123/?query=insert%20into%20log(message)%20format%20JSONAsString'),
+        _METRICS_SINK_URL: new URL(os.env.PIPY_METRICS_SINK || 'http://127.0.0.1:9001/metrics'),
 
         _SERVICE_INFO: {
           name: os.env.PIPY_SERVICE_NAME || 'anonymous',
@@ -627,7 +492,6 @@ spec:
         },
 
         _CONTENT_TYPES: {
-          '': true,
           'text/plain': true,
           'text/html': true,
           'application/json': true,
@@ -635,39 +499,72 @@ spec:
           'multipart/form-data': true,
         },
 
+        _counters: {
+          http: {},
+          dubbo: {},
+        },
+
+        _statuses: {
+          http: {},
+          dubbo: {},
+        },
+
+        _percentile: {
+          http: {
+            inbound: new algo.Percentile([
+              1,2,5,7,10,15,20,25,30,40,50,60,70,80,90,100,
+              200,300,400,500,1000,2000,5000,10000,30000,60000,
+            ]),
+            outbound: new algo.Percentile([
+              1,2,5,7,10,15,20,25,30,40,50,60,70,80,90,100,
+              200,300,400,500,1000,2000,5000,10000,30000,60000,
+            ]),
+          },
+          dubbo: {
+            inbound: new algo.Percentile([
+              1,2,5,7,10,15,20,25,30,40,50,60,70,80,90,100,
+              200,300,400,500,1000,2000,5000,10000,30000,60000,
+            ]),
+            outbound: new algo.Percentile([
+              1,2,5,7,10,15,20,25,30,40,50,60,70,80,90,100,
+              200,300,400,500,1000,2000,5000,10000,30000,60000,
+            ]),
+          },
+        },
+
         _requests: new algo.Cache(10000),
         _responses: new algo.Cache(10000),
         _contentEncoding: null,
 
         _router: new algo.URLRouter({
-          '/req/*': msg => (
+          '/log/req/*': msg => (
             ((
               id
             ) => (
-              id = msg.head.path.substring(5),
+              id = msg.head.path.substring(9),
               _requests.set(id, msg),
               _combine(id)
             ))()
           ),
 
-          '/res/*': msg => (
+          '/log/res/*': msg => (
             ((
               id
             ) => (
-              id = msg.head.path.substring(5),
+              id = msg.head.path.substring(9),
               _responses.set(id, msg),
               _combine(id)
             ))()
           ),
 
-          '/*': () => null,
+          '/*': () => new Message({ status: 404 }, 'Not found'),
         }),
 
         _combine: (id) => (
           ((
-            dir, status,
-            req, reqInfo, reqHeaders, reqTime, reqType, reqLogBody,
-            res, resInfo, resHeaders, resTime, resType, resLogBody,
+            dir, proto, status, attachments,
+            req, reqInfo, reqBody, reqHeaders, reqTime, reqType, reqLogBody,
+            res, resInfo, resBody, resHeaders, resTime, resType, resLogBody,
           ) => (
             req = _requests.get(id),
             res = _responses.get(id),
@@ -687,61 +584,112 @@ spec:
               reqLogBody = Boolean(_CONTENT_TYPES[reqType]),
               resLogBody = Boolean(_CONTENT_TYPES[resType]),
               dir = reqInfo.dir,
+              proto = reqInfo.protocol.split('/')[0].toLowerCase(),
               status = resInfo.status,
-              new Message(
-                {
-                  metrics: {
-                    proto: 'http',
-                    status,
-                    latency: resTime - reqTime,
-                  },
-                },
-                JSON.encode({
-                  rid: +id,
-                  sid: reqInfo.session,
-                  iid: _INSTANCE_ID,
-                  dir,
-                  proto: 'http',
-                  req: {
-                    protocol: reqInfo.protocol,
-                    method: reqInfo.method,
-                    path: reqInfo.path,
-                    headers: reqHeaders,
-                    body: reqLogBody ? req.body.toString() : undefined,
-                  },
-                  res: {
-                    protocol: resInfo.protocol,
-                    status,
-                    statusText: resInfo.statusText,
-                    headers: resHeaders,
-                    body: resLogBody ? res.body.toString() : undefined,
-                  },
-                  reqTime,
-                  resTime,
-                  reqSize: reqInfo.size,
-                  resSize: resInfo.size,
-                  remoteAddr: reqInfo.remoteAddr,
-                  remotePort: reqInfo.remotePort,
-                  localAddr: reqInfo.localAddr,
-                  localPort: reqInfo.localPort,
-                  target: reqInfo.target,
-                  node: _NODE_INFO,
-                  pod: _POD_INFO,
-                  service: _SERVICE_INFO,
-                  trace: {
-                    id: reqHeaders['x-b3-traceid'],
-                    span: reqHeaders['x-b3-spanid'],
-                    parent: reqHeaders['x-b3-parentspanid'],
-                    sampled: reqHeaders['x-b3-sampled'],
-                  },
-                }).push('\n')
+              _counters[proto].total = (_counters[proto].total|0) + 1,
+              _statuses[proto][status] = (_statuses[proto][status]|0) + 1,
+              _percentile[proto][dir]?.score?.(resTime - reqTime),
+              proto === 'dubbo' ? (
+                reqBody = Hessian.decode(req.body),
+                resBody = Hessian.decode(res.body),
+                reqBody && resBody ? (
+                  attachments = reqBody.pop(),
+                  status !== 20 && (_counters[proto].error = (_counters[proto].error|0) + 1),
+                  new Message(
+                    JSON.encode({
+                      rid: +id,
+                      sid: reqInfo.session,
+                      iid: _INSTANCE_ID,
+                      dir,
+                      proto,
+                      req: {
+                        id: reqInfo.id,
+                        version: reqBody?.[0],
+                        'service.name': reqBody?.[1],
+                        'service.version': reqBody?.[2],
+                        'method.name': reqBody?.[3],
+                        'method.type': reqBody?.[4],
+                        arguments: reqBody,
+                        attachments,
+                      },
+                      res: {
+                        status,
+                        type: resBody?.[0],
+                        value: resBody?.[1],
+                      },
+                      reqTime,
+                      resTime,
+                      reqSize: req.body.size,
+                      resSize: res.body.size,
+                      remoteAddr: reqInfo.remoteAddr,
+                      remotePort: reqInfo.remotePort,
+                      localAddr: reqInfo.localAddr,
+                      localPort: reqInfo.localPort,
+                      target: reqInfo.target,
+                      node: _NODE_INFO,
+                      pod: _POD_INFO,
+                      service: _SERVICE_INFO,
+                      trace: {
+                        id: attachments?.['X-B3-TraceId'],
+                        span: attachments?.['X-B3-SpanId'],
+                        parent: attachments?.['X-B3-ParentSpanId'],
+                        sampled: attachments?.['X-B3-Sampled'],
+                      },
+                    }).push('\n')
+                  )
+                ) : new Message
+              ) : (
+                status >= 400 && (_counters[proto].error = (_counters[proto].total|0) + 1),
+                new Message(
+                  JSON.encode({
+                    rid: +id,
+                    sid: reqInfo.session,
+                    iid: _INSTANCE_ID,
+                    dir,
+                    proto,
+                    req: {
+                      protocol: reqInfo.protocol,
+                      method: reqInfo.method,
+                      path: reqInfo.path,
+                      headers: reqHeaders,
+                      body: reqLogBody ? req.body.toString() : undefined,
+                    },
+                    res: {
+                      protocol: resInfo.protocol,
+                      status,
+                      statusText: resInfo.statusText,
+                      headers: resHeaders,
+                      body: resLogBody ? res.body.toString() : undefined,
+                    },
+                    reqTime,
+                    resTime,
+                    reqSize: reqInfo.size,
+                    resSize: resInfo.size,
+                    remoteAddr: reqInfo.remoteAddr,
+                    remotePort: reqInfo.remotePort,
+                    localAddr: reqInfo.localAddr,
+                    localPort: reqInfo.localPort,
+                    target: reqInfo.target,
+                    node: _NODE_INFO,
+                    pod: _POD_INFO,
+                    service: _SERVICE_INFO,
+                    trace: {
+                      id: reqHeaders['x-b3-traceid'],
+                      span: reqHeaders['x-b3-spanid'],
+                      parent: reqHeaders['x-b3-parentspanid'],
+                      sampled: reqHeaders['x-b3-sampled'],
+                    },
+                  }).push('\n')
+                )
               )
-            ) : null
+            ) : new Message
           ))()
         ),
       })
 
-      .pipeline('log')
+      // Request/response input
+      .listen(os.env.PIPY_LOGGER_LISTEN || 9090)
+        .decodeHttpRequest()
         .onMessageStart(
           msg => _contentEncoding = msg.head.headers['content-encoding']
         )
@@ -752,82 +700,268 @@ spec:
         .replaceMessage(
           msg => _router.find(msg.head.path)(msg)
         )
+        .merge('batch')
 
       .pipeline('decompress')
         .decompressMessageBody('inflate')
 
-      .pipeline('bypass')
-    metrics.js: |+
-      //
-      // Metrics output:
-      //   {
-      //     "status": {
-      //       "http": {},
-      //     },
-      //     "latency": {
-      //       "http": {
-      //         "inbound": {
-      //           "p90": 0,
-      //           "p95": 0,
-      //           "p99": 0
-      //         },
-      //         "outbound": {
-      //           "p90": 0,
-      //           "p95": 0,
-      //           "p99": 0
-      //         }
-      //       }
-      //     }
-      //   }
-
-      pipy({
-        _LATENCY_BUCKETS: [
-          1,2,5,7,10,15,20,25,30,40,50,60,70,80,90,100,
-          200,300,400,500,1000,2000,5000,10000,30000,60000,
-        ],
-
-        _statuses: {},
-        _latencies: {},
-      })
-
-      .pipeline('count')
-        .handleMessageStart(
-          msg => (
-            ((
-              metrics,
-              proto,
-              dir,
-              status,
-              latency,
-              statuses,
-              latencies,
-            ) => (
-              metrics = msg.head.metrics,
-              proto = metrics.proto,
-              dir = metrics.dir,
-              status = metrics.status,
-              latency = metrics.latency,
-              statuses = _statuses[proto] || (_statuses[proto] = {}),
-              statuses[status] = (statuses[status]|0) + 1,
-              latencies = _latencies[proto] || (_latencies[proto] = {}),
-              latencies = latencies[dir] || (latencies[dir] = new algo.Percentile(_LATENCY_BUCKETS)),
-              latencies.score(latency)
-            ))()
-          )
+      // Accumulate log messages into batches
+      .pipeline('batch')
+        .pack(
+          1000,
+          {
+            timeout: 5,
+          }
+        )
+        .replaceMessageStart(
+          () => new MessageStart({
+            method: 'POST',
+            path: _LOG_SINK_URL.path,
+            headers: {
+              'Host': _LOG_SINK_URL.host,
+              'Content-Type': 'application/json',
+              'Authorization': _LOG_AUTH,
+            }
+          })
+        )
+        .encodeHttpRequest()
+        .connect(
+          () => _LOG_SINK_URL.host,
+          {
+            bufferLimit: '8m',
+          }
         )
 
-      .pipeline('dump')
+      // Regularly push metrics out
+      .task('5s')
         .replaceMessage(
           () => new Message(
+            {
+              method: 'POST',
+              path: _METRICS_SINK_URL.path,
+              headers: {
+                'content-type': 'application/json',
+              },
+            },
             JSON.encode({
+              counts: _counters,
               status: _statuses,
+              latency: {
+                http: {
+                  inbound: {
+                    p90: _percentile.http.inbound.calculate(90),
+                    p95: _percentile.http.inbound.calculate(95),
+                    p99: _percentile.http.inbound.calculate(99),
+                  },
+                  outbound: {
+                    p90: _percentile.http.outbound.calculate(90),
+                    p95: _percentile.http.outbound.calculate(95),
+                    p99: _percentile.http.outbound.calculate(99),
+                  },
+                },
+                dubbo: {
+                  inbound: {
+                    p90: _percentile.dubbo.inbound.calculate(90),
+                    p95: _percentile.dubbo.inbound.calculate(95),
+                    p99: _percentile.dubbo.inbound.calculate(99),
+                  },
+                  outbound: {
+                    p90: _percentile.dubbo.outbound.calculate(90),
+                    p95: _percentile.dubbo.outbound.calculate(95),
+                    p99: _percentile.dubbo.outbound.calculate(99),
+                  },
+                },
+              },
             })
           )
         )
-        .handleMessage(
+        .mux('send-metrics')
+        .replaceMessage(
           () => (
-            delete _statuses.http,
-            delete _latencies.http
+            _counters.http = {},
+            _counters.dubbo = {},
+            _statuses.http = {},
+            _statuses.dubbo = {},
+            _percentile.http.inbound.reset(),
+            _percentile.http.outbound.reset(),
+            _percentile.dubbo.inbound.reset(),
+            _percentile.dubbo.outbound.reset(),
+            new SessionEnd
+          )
+        )
+
+      .pipeline('send-metrics')
+        .encodeHttpRequest()
+        .connect(
+          () => _METRICS_SINK_URL.host
+        )
+        .decodeHttpResponse()
+
+      .pipeline('bypass')
+    eureka.js: |+
+      pipy({
+        _SERVICE_PORT_OFFSET: +(os.env.PIPY_LISTEN_HTTP_INBOUND_OFFSET || 10),
+        _TARGET_VERSION: os.env.SERVICE_VERSION,
+        _queue: {},
+        _mapping: {},
+        _services: {},
+        _balancers: {},
+        _range: new Netmask('127.0.0.0/8'),
+
+        _target: undefined,
+        _deltaVersion: undefined,
+      })
+
+        .task()
+        .handleMessageStart(
+          () => (
+            Object.assign(_services, JSON.parse(pipy.store.get('eureka-services') || '{}')),
+            Object.keys(_services).forEach(
+              loopback => _balancers[loopback] = (
+                new algo.RoundRobinLoadBalancer(_services[loopback].targets)
+              )
+            )
+          )
+        )
+
+        .task()
+        .replaceMessage(
+          () => (
+            _services = {},
+            _balancers = {},
+            new Message(
+              {
+                method: 'GET',
+                path: '/eureka/apps',
+                headers: {
+                  "host": "localhost:8771",
+                  "user-agent": "curl/7.64.1",
+                  "accept": "application/json",
+                  'accept-encoding': 'gzip',
+                },
+              },
+              '',
+            )
+          )
+        )
+        .mux('query')
+        .replaceMessage(
+          () => console.log('full fetch done')
+        )
+
+        .pipeline('query')
+        .onSessionStart(
+          () => (
+            _queue = []
+          )
+        )
+        .onMessage(
+          msg => (
+            _queue.push(msg)
+          )
+        )
+        .encodeHttpRequest()
+        .connect(os.env.PIPY_TARGET_EUREKA || '127.0.0.1:8761')
+        .decodeHttpResponse({ decompress: true })
+        .replaceMessage(
+          (
+            msg,
+            body, //res
+            reqHead, // request head
+            data,
+            name,
+            targets,
+            loopback,
+          ) => (
+            reqHead = _queue.shift()?.head,
+            // console.log('path: ' + JSON.stringify(reqHead)),
+            // console.log('body: ' + msg.body),
+            msg.head.headers['content-encoding'] = '*', // indicate downsream decompression unnecessary
+            // full fetch and delta fetch
+            (reqHead?.path == '/eureka/apps/' || reqHead?.path == '/eureka/apps' || reqHead?.path.startsWith('/eureka/apps/?') || reqHead?.path == '/eureka/apps/delta') && reqHead?.headers?.accept?.startsWith('application/json') && reqHead?.method == 'GET' ? (
+              body = msg.body,
+              data = JSON.decode(body),
+              data?.applications?.application?.forEach(
+                //application
+                a => (
+                  targets = null,
+                  loopback = null,
+                  name = a.name.toLowerCase(), // application name
+                  loopback = _mapping[name],
+                  loopback || (
+                    loopback = _range.next(),
+                    _mapping[name] = loopback
+                  ),
+                  console.log(`processing service: ${name}`),
+                  //excluding instaince with sidecar injected but diffect version
+                  //those instances are not in same version scope
+                  a.instance = a.instance?.filter(
+                    i => i.metadata?.version == undefined || i.metadata?.version == _TARGET_VERSION
+                  ),
+
+                  targets = a.instance?.map?.(
+                    ins => ((i, addr, deleted) => (
+                      //port offset for sidecar inject intance only
+                      addr = i.metadata?.mesh == 'true' ? `${i.ipAddr}:${+i.port.$ + _SERVICE_PORT_OFFSET}` : `${i.ipAddr}:${i.port.$}`,
+                      //mark instance action
+                      deleted = i.actionType == 'DELETED',
+                      { addr, deleted }
+                    ))(ins, '', '')
+                  ),
+                  /*_deltaVersion != data.applications['versions__delta']*/true && (
+                    //cache delta version
+                    _deltaVersion = data.applications['versions__delta'],
+                    //update service targets
+                    ((deleted, added) => (
+                      deleted = targets.filter(t => t.deleted),
+                      added = targets.filter(t => !t.deleted),
+                      //init if not exist
+                      _services[loopback] || (_services[loopback] = { "name": name, "targets": [] }),
+                      //remove DELETE instances
+                      _services[loopback].targets = _services[loopback]?.targets.filter(
+                        t => !deleted.find(d => d.addr == t)
+                      ),
+                      //add ADDED instances
+                      added.forEach(
+                        a => (
+                          !_services[loopback].targets.find(exist => exist == a.addr) && (
+                            _services[loopback]?.targets.push(a.addr,)
+                          )
+                        )
+                      )
+                    ))([], []),
+                    //update service balancer
+                    _balancers[loopback] = new algo.RoundRobinLoadBalancer(_services[loopback].targets)
+                  ),
+
+                  a.instance?.forEach(
+                    //instance
+                    i => (
+                      i.port.$ = (os.env.PIPY_HTTP_LISTEN_OUTBOUND | 0) || 8081,
+                      i.hostName = loopback,
+                      i.ipAddr = loopback
+                    )
+                  )
+                )
+              ),
+              pipy.store.set('eureka-services', JSON.stringify(_services)),
+              console.log(JSON.stringify(_services)),
+              new Message(msg.head, JSON.encode(data))
+            ) : (
+              new Message(msg.head, msg.body)
+            )
+          )
+        )
+
+        .pipeline('route')
+        .handleMessageStart(
+          msg => (
+            _target = _target || (
+              _balancers[__inbound.localAddress]?.select?.() || ''
+            ),
+            msg.context.service = _services[__inbound.localAddress]?.name,
+            console.log(`${__inbound.localAddress} : ${_target}`),
+            msg.context.target = _target
           )
         )
     update.js: |+

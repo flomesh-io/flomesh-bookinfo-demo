@@ -916,7 +916,7 @@ spec:
       containers:
       - args:
         - --enable-leader-election
-        - --proxy-image=flomesh/pipy-pjs:latest
+        - --proxy-image=flomesh/pipy-pjs:0.4.0-118
         - --proxy-init-image=flomesh/proxy-init:0.4.1
         - --v=2
         command:

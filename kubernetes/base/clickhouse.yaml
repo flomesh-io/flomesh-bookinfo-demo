@@ -27,6 +27,5 @@ spec:
   - port: 8123
     name: chdb
     targetPort: 8123
-#  clusterIP: None
 ---
 
