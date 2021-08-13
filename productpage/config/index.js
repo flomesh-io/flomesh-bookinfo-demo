@@ -1,5 +1,5 @@
-const apiGatewayHostname = process.env.K8S_SAMPLES_API_GATEWAY_HOSTNAME ? `.${process.env.K8S_SAMPLES_API_GATEWAY_HOSTNAME}` : '127.0.0.1';
-const apiGatewayPort = process.env.K8S_SAMPLES_API_GATEWAY_PORT ? `.${process.env.K8S_SAMPLES_API_GATEWAY_PORT}` : '10000';
+const apiGatewayHostname = process.env.K8S_SAMPLES_API_GATEWAY_HOSTNAME ? `${process.env.K8S_SAMPLES_API_GATEWAY_HOSTNAME}` : '127.0.0.1';
+const apiGatewayPort = process.env.K8S_SAMPLES_API_GATEWAY_PORT ? `${process.env.K8S_SAMPLES_API_GATEWAY_PORT}` : '10000';
 //const servicesDomain = process.env.SERVICES_DOMAIN ? `.${process.env.SERVICES_DOMAIN}` : '';
 
 const details = {
