@@ -6,7 +6,6 @@ spec:
   selector:
     matchLabels:
       sys: bookinfo-samples
-#      version: v1
   namespace: flomesh-spring
   serviceEnv:
     - name: eureka.instance.metadataMap.mesh

@@ -1,5 +1,8 @@
-# Spring Bookinfo
+# Spring Bookinfo Demo Quickstart
 
+## Architect
+
+![typology](docs/images/demo/spring-demo-architect.png)
 ## Environment Setup
 
 Install [k3s](https://github.com/k3s-io/k3s) via [k3d](https://k3d.io/). It will run k3s in Docker. So Docker is required.
