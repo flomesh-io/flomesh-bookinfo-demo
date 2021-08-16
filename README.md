@@ -1,23 +1,26 @@
 # Spring Bookinfo Demo Quickstart
 
-## Architect
+## 架构
 
 ![typology](docs/images/demo/spring-demo-architect.png)
-## Environment Setup
 
-Install [k3s](https://github.com/k3s-io/k3s) via [k3d](https://k3d.io/). It will run k3s in Docker. So Docker is required.
+## 环境搭建
+
+搭建 Kubernetes 环境，可以选择 kubeadm 进行集群搭建。也可以选择 minikube、k3s、Kind 等，本文使用 k3s。
+
+使用 [k3d](https://k3d.io/) 安装 [k3s](https://github.com/k3s-io/k3s)。k3d 将在 Docker 容器中运行 k3s，因此需要保证已经安装了 Docker。
 
 ```shell
-k3d cluster create spring-demo -p "81:80@loadbalancer" --k3s-server-arg '--no-deploy=traefik'
+$ k3d cluster create spring-demo -p "81:80@loadbalancer" --k3s-server-arg '--no-deploy=traefik'
 ```
 
-## Flomesh Installation
+## 安装 Flomesh
 
-Clone code from `https://github.com/addozhang/flomesh-bookinfo-demo.git`. Then go into directory `flomesh-bookinfo-demo/kubernetes`.
+从仓库 `https://github.com/addozhang/flomesh-bookinfo-demo.git` 克隆代码。进入到 `flomesh-bookinfo-demo/kubernetes`目录。
 
-All manifests are located in that directory including YAMLs of Flomesh components and demo.
+所有 Flomesh 组件以及用于 demo 的 yamls 文件都位于这个目录中。
 
-### Install Cert Manager
+### 安装 Cert Manager
 
 ```shell
 $ kubectl apply -f artifacts/cert-manager-v1.3.1.yaml
@@ -66,7 +69,7 @@ mutatingwebhookconfiguration.admissionregistration.k8s.io/cert-manager-webhook c
 validatingwebhookconfiguration.admissionregistration.k8s.io/cert-manager-webhook created
 ```
 
-Note: wait for all pods up in namespace `cert-manager`：
+注意: 要保证 `cert-manager` 命名空间中所有的 pod 都正常运行：
 
 ```shell
 $ kubectl get pod -n cert-manager
@@ -76,13 +79,13 @@ cert-manager-59f6c76f4b-z5lgf              1/1     Running   0          98s
 cert-manager-cainjector-59f76f7fff-flrr7   1/1     Running   0          98s
 ```
 
-### Install Operator
+### 安装 Pipy Operator
 
 ```shell
 $ kubectl apply -f artifacts/pipy-operator.yaml
 ```
 
-You should get output like below:
+执行完命令后会看到类似的结果：
 
 ```
 namespace/flomesh created
@@ -109,7 +112,7 @@ mutatingwebhookconfiguration.admissionregistration.k8s.io/proxy-injector-webhook
 validatingwebhookconfiguration.admissionregistration.k8s.io/validating-webhook-configuration created
 ```
 
-Note: make sure all pods up in namespace `flomesh`:
+注意：要保证 `flomesh` 命名空间中所有的 pod 都正常运行：
 
 ```shell
 $ kubectl get pod -n flomesh
@@ -118,7 +121,7 @@ proxy-injector-5bccc96595-spl6h    1/1     Running   0          39s
 operator-manager-c78bf8d5f-wqgb4   1/1     Running   0          39s
 ```
 
-### Install Ingress Controller
+### 安装 Ingress 控制器
 
 ```shell
 $ kubectl apply -f ingress/ingress-pipy.yaml
@@ -143,10 +146,10 @@ mutatingwebhookconfiguration.admissionregistration.k8s.io/mutating-webhook-confi
 validatingwebhookconfiguration.admissionregistration.k8s.io/validating-webhook-configuration configured
 ```
 
-Check the pod status in namespace `ingress-pipy`:
+检查 `ingress-pipy` 命名空间下 pod 的状态：
 
 ```shell
-kubectl get pod -n ingress-pipy
+$ kubectl get pod -n ingress-pipy
 NAME                                       READY   STATUS    RESTARTS   AGE
 svclb-ingress-pipy-controller-8pk8k        1/1     Running   0          71s
 ingress-pipy-cfg-6bc649cfc7-8njk7          1/1     Running   0          71s
@@ -154,15 +157,45 @@ ingress-pipy-controller-76cd866d78-m7gfp   1/1     Running   0          71s
 ingress-pipy-manager-5f568ff988-tw5w6      0/1     Running   0          70s
 ```
 
-Now, you already have Flomesh installed, including operator and ingress controller.
+至此，你已经成功安装 Flomesh 的所有组件，包括 operator 和 ingress 控制器。
 
-## Middleware
+## 中间件
 
-### Use Pipy to mock
+Demo 需要用到 clickhouse（用于存储入站和出站的请求信息），有两种方案：使用 pipy 模拟 clickhouse 接收请求；使用 Docker 运行 clickhouse（需要安装 docker-compose）。
 
-### Run with Docker
+这里为了方便，建议使用第一种方案。
 
-```yaml
+### 使用 Pipy 模拟
+
+```shell
+$ cat > mock.js <<EOF
+pipy()
+.listen(8123)
+    .link('mock')
+
+.listen(9001)
+    .link('mock')
+.pipeline('mock')
+    .decodeHttpRequest()
+    .replaceMessage(
+        req => (
+            console.log(req.body.toString()),
+            new Message('OK')
+        )
+    )
+    .encodeHttpResponse()
+EOF
+
+$ docker run --rm --name mock --entrypoint "pipy" -v ${PWD}:/script -p 8123:8123 -p 9001:9001 flomesh/pipy-pjs:0.4.0-118 /script/mock.js
+```
+
+
+### Docker 中运行 
+
+将如下内容保存到
+
+```shell
+$ cat > clickhouse.yaml <<EOF
 version: "3"
 services:
   server:
@@ -184,44 +217,12 @@ services:
     command: ["--host", "server"]
     depends_on:
       - server
+EOF
+
+$ docker-compose -f clickhouse.yaml up -d
 ```
 
-## Run Demo
-
-The demo is running a separated namespace `flomesh-spring`, execute `kubectl apply -f base/namespace.yaml` to create. If you describe the created namespace, you will find it annotated with `flomesh.io/inject=true`.
-
-This annotation indicates Admission WebHook of operator to hook the pod creation of this annotated namespace.
-
-```shell
-$ kubectl describe ns flomesh-spring
-Name:         flomesh-spring
-Labels:       app.kubernetes.io/name=spring-mesh
-              app.kubernetes.io/version=1.19.0
-              flomesh.io/inject=true
-              kubernetes.io/metadata.name=flomesh-spring
-Annotations:  <none>
-Status:       Active
-
-No resource quota.
-
-No LimitRange resource.
-```
-
-First of all, let's go through the `ProxyProfile` CRD provided by operator. In this demo, it describes the proxy sidecar container fragment and the script used by proxy. Check [proxy-profile.yaml]() for more details.
-
-```shell
-$ kubectl apply -f sidecar/proxy-profile.yaml
-```
-
-Check if it's created successfully:
-
-```shell
-$ kubectl get pf
-NAME                         SELECTOR                                                    CONFIG                                                                AGE
-proxy-profile-002-bookinfo   {"matchLabels":{"sys":"bookinfo-samples","version":"v1"}}   {"flomesh-spring":"proxy-profile-002-bookinfo-fsmcm-b67a9e39-23a1"}   40s
-```
-
-Then, you need to have ClickHouse installed somewhere, and create the log table by [init-log.sql](scripts/init-log.sql) in default schema:
+然后再初始化表 `log`，这里需要用到 [init-log.sql](scripts/init-log.sql) 中定义的 schema：
 
 ```sql
 create table log (
@@ -286,49 +287,78 @@ partition by toYYYYMM(toDateTime(reqTime/1000))
 order by reqTime;
 ```
 
-As the services has startup dependencies, you need to deploy it one by one following the strict order. Before starting, check the **Endpoints** section of **base/clickhouse.yaml**.
+## 运行 Demo
 
-```yaml
-apiVersion: v1
-kind: Endpoints
-metadata:
-  name: samples-clickhouse
-  namespace: flomesh-spring
-  labels:
-    app: clickhouse
-    service: clickhouse
-subsets:
-  - addresses:
-    - ip: 172.19.182.213 // replace IP here
-    ports:
-    - name: chdb
-      port: 8123
-      protocol: TCP
+Demo 运行在另一个独立的命名空间 `flomesh-spring` 中，执行命令 `kubectl apply -f base/namespace.yaml` 来创建该命名空间。如果你 `describe` 该命名空间你会发现其使用了 `flomesh.io/inject=true` 注解。
+
+这个注解告知 operator 的 admission webHook 拦截标注的命名空间下 pod 的创建。
+
+```shell
+$ kubectl describe ns flomesh-spring
+Name:         flomesh-spring
+Labels:       app.kubernetes.io/name=spring-mesh
+              app.kubernetes.io/version=1.19.0
+              flomesh.io/inject=true
+              kubernetes.io/metadata.name=flomesh-spring
+Annotations:  <none>
+Status:       Active
+
+No resource quota.
+
+No LimitRange resource.
 ```
 
-After above, execute `kubectl apply -f base/clickhouse.yaml`.
+我们首先看下 Flomesh 提供的 CRD `ProxyProfile`。这个 demo 中，其定义了 sidecar 容器片段以及所使用的的脚本。检查 `sidecar/proxy-profile.yaml` 获取更多信息。执行下面的命令，创建 CRD 资源。
 
-### Deploy Discovery Server
+```shell
+$ kubectl apply -f sidecar/proxy-profile.yaml
+```
+
+检查是否创建成功：
+
+```shell
+$ kubectl get pf -o wide
+NAME                         NAMESPACE        DISABLED   SELECTOR                                     CONFIG                                                                AGE
+proxy-profile-002-bookinfo   flomesh-spring   false      {"matchLabels":{"sys":"bookinfo-samples"}}   {"flomesh-spring":"proxy-profile-002-bookinfo-fsmcm-b67a9e39-0418"}   27s
+```
+
+As the services has startup dependencies, you need to deploy it one by one following the strict order. Before starting, check the **Endpoints** section of **base/clickhouse.yaml**.
+
+提供中间件的访问 endpoid，将 `base/clickhouse.yaml` 和 `base/metrics.yaml` 中的 ip 地址改为本机的 ip 地址（不是 127.0.0.1）。
+
+修改之后，执行如下命令：
+
+```shell
+$ kubectl apply -f base/clickhouse.yaml
+$ kubectl apply -f base/metrics.yaml
+
+$ kubectl get endpoints samples-clickhouse samples-metrics
+NAME                 ENDPOINTS            AGE
+samples-clickhouse   192.168.1.101:8123   105m
+samples-metrics      192.168.1.101:9001   2m24s
+```
+
+### 部署注册中心
 
 ```shell
 $ kubectl apply -f base/discovery-server.yaml
 ```
 
-Check pod status and make sure there are two containers ready.
+检查注册中心 pod 的状态，确保 3 个容器都运行正常。
 
 ```shell
 $ kubectl get pod
 NAME                                           READY   STATUS        RESTARTS   AGE
-samples-discovery-server-v1-85798c47d4-dr72k   2/2     Running       0          96s
+samples-discovery-server-v1-85798c47d4-dr72k   3/3     Running       0          96s
 ```
 
-### Deploy Config Server
+### 部署配置中心
 
 ```shell
 $ kubectl apply -f base/config-service.yaml
 ```
 
-### Deploy API Gateway and other Apps
+### 部署 API 网关以及 bookinfo 相关的服务
 
 ```shell
 $ kubectl apply -f base/bookinfo-v1.yaml
@@ -337,7 +367,7 @@ $ kubectl apply -f base/productpage-v1.yaml
 $ kubectl apply -f base/productpage-v2.yaml
 ```
 
-Then check pods status, all pods except config service have sidecar container injected.
+检查 pod 状态，可以看到所有 pod 都注入了容器。
 
 ```shell
 $ kubectl get pods
@@ -355,21 +385,28 @@ samples-bookinfo-productpage-v1-854675b56-8n2xd    1/1     Running   0          
 samples-bookinfo-productpage-v2-669bd8d9c7-8wxsf   1/1     Running   0          6m57s
 ```
 
-### Before Test
+### 添加 Ingress 规则
 
-The access to sample is via Ingress controller. First we need to obtain the ip address of LB.
+执行如下命令添加 Ingress 规则。
 
+```shell
+$ kubectl apply -f ingress/ingress.yaml
+```
+
+### 测试前的准备
+
+访问 demo 服务都要通过 ingress 控制器。因此需要先获取 LB 的 ip 地址。
 ```shell
 //Obtain the controller IP
 //Here, we append port. 
 ingressAddr=`kubectl get svc ingress-pipy-controller -n ingress-pipy -o jsonpath='{.spec.clusterIP}'`:81
 ```
 
-We run all apps in k3s cluster which created by `k3d` with option `-p 81:80@loadbalancer`, the cluster runs in a Docker container. So we can use ip `127.0.0.1` and port `81`.
+这里我们使用了是 k3d 创建的 k3s，命令中加入了 `-p 81:80@loadbalancer` 选项。我们可以使用 `127.0.0.1:81` 来访问 ingress 控制器。这里执行命令 `ingressAddr=127.0.0.1:81`。
 
-Due to principle of Ingress, we arrange host names for each `rule`. Each request sending to ingress controller should carry host above in HTTP header `Host`.
+Ingress 规则中，我们为每个规则指定了 `host`，因此每个请求中需要通过 HTTP 请求头 `Host` 提供对应的 `host`。
 
-Or you can add entries in `/etc/hosts`.
+或者在 `/etc/hosts` 添加记录：
 
 ```shell
 $ kubectl get ing ingress-pipy-bookinfo -n flomesh-spring -o jsonpath="{range .spec.rules[*]}{.host}{'\n'}"
@@ -378,12 +415,11 @@ api-v2.flomesh.cn
 fe-v1.flomesh.cn
 fe-v2.flomesh.cn
 
-//run with sudo, or add manually
-$ echo 127.0.0.1 api-v1.flomesh.cnapi-v2.flomesh.cnfe-v1.flomesh.cnfe-v2.flomesh.cn >> /etc/hosts
+//添加记录到 /etc/hosts
+127.0.0.1 api-v1.flomesh.cn api-v2.flomesh.cn fe-v1.flomesh.cn fe-v2.flomesh.cn
 ```
 
-
-#### Verification
+#### 验证
 
 ```shell
 $ curl http://127.0.0.1:81/actuator/health -H 'Host: api-v1.flomesh.cn'
@@ -393,7 +429,9 @@ $ curl http://api-v1.flomesh.cn:81/actuator/health
 {"status":"UP","groups":["liveness","readiness"]}
 ```
 
-## Test
+## 测试
+
+在 v1 版本的服务中，我们为 book 添加 rating 和 review。
 
 ```shell
 # rate a book
@@ -413,7 +451,7 @@ $ curl -X POST http://$ingressAddr/bookinfo-reviews/reviews \
 $ curl http://$ingressAddr/bookinfo-reviews/reviews/2099a055-1e21-46ef-825e-9e0de93554ea -H "Host: api-v1.flomesh.cn"
 ```
 
-After execute commands above, we can access the two version product page and get result as below.
+执行上面的命令之后，我们可以在浏览器中访问前端服务（`http://fe-v1.flomesh.cn:81/productpage?u=normal`、 `http://fe-v1.flomesh.cn:82/productpage?u=normal`），只有 v1 版本的前端中才能看到刚才添加的记录。
 
 ![page v1](./docs/images/demo/page-v1.png)
 
