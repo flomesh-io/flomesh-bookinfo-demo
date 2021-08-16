@@ -30,7 +30,6 @@ spec:
       - name: PIPY_LOG_SINK
         value: "http://samples-clickhouse.flomesh-spring.svc:8123/?query=insert%20into%20log(message)%20format%20JSONAsString"
       - name: PIPY_METRICS_SINK
-#        value: "http://sample-metrics.flomesh-spring.svc:9001/services/$(PIPY_SERVICE_NAME)/metrics"
         value: "http://samples-metrics.flomesh-spring.svc:9001/metrics"
       - name: PIPY_LOGGER_LISTEN
         value: "9090"
@@ -49,6 +48,8 @@ spec:
             fieldPath: metadata.labels['version']
       - name: PIPY_TARGET_EUREKA
         value: samples-discovery-server.flomesh-spring:8761
+      - name: PIPY_CONFIG
+        value: "http://samples-config.flomesh-spring.svc:9000/config"
 
   config:
     sidecar.js: |+
@@ -80,6 +81,8 @@ spec:
 
         _g: {
           config: null,
+          configInbound: null,
+          configOutbound: null,
           autoConnectionID: 0,
           autoRequestID: 0,
         },
@@ -104,13 +107,20 @@ spec:
           () => _connectionPool.freeTenant(__inbound.id)
         )
         .decodeHttpRequest()
+        .tap(
+          () => (_g.configOutbound?.dataLimit || -1) + 'k'
+        )
+        .tap(
+          () => (
+            _g.configOutbound?.rateLimit || -1
+            )
+        )
         .demux('outbound-message')
         .encodeHttpResponse()
 
       .pipeline('outbound-message')
         .handleMessageStart(
           msg => (
-            console.log('out-going'),
             _context = msg.context,
             _context.id = ++_g.autoRequestID
           )
@@ -144,6 +154,15 @@ spec:
           () => _connectionPool.freeTenant(__inbound.id)
         )
         .decodeHttpRequest()
+        .tap(
+          () => (
+            console.log('ratelimit: ' + _g.configInbound?.rateLimit),
+            (_g.configInbound?.dataLimit || -1) + 'k'
+          )
+        )
+        .tap(
+          () => (_g.configInbound?.rateLimit || -1)
+        )
         .demux('inbound-message')
         .encodeHttpResponse()
 
@@ -155,9 +174,21 @@ spec:
           )
         )
         .fork('log-request')
+        .link(
+          'circuit-break', () => _g.configInbound?.circuitBreak,
+          'deny-http', () => _g.configInbound?.whitelist && (
+            !_g.configInbound.whitelist.some(mask => mask.contains(__inbound.remoteAddress))
+          ),
+          'deny-http', () => _g.configInbound?.blacklist && (
+            _g.configInbound.blacklist.some(mask => mask.contains(__inbound.remoteAddress))
+          ),
+          'pass-http'
+        )
+        .fork('log-response')
+
+      .pipeline('pass-http')
         .link('inbound-routing', () => !_context.aborted && !_context.target, 'bypass')
         .link('inbound-request', () => !_context.aborted, 'bypass')
-        .fork('log-response')
 
       .pipeline('inbound-routing')
         .handleMessageStart(
@@ -169,6 +200,33 @@ spec:
           'forward', () => _context.target,
           '404'
         )
+
+      .pipeline('circuit-break')
+        .replaceMessage(
+          msg => new Message(
+            {
+              id: msg.head.id,
+              status: 503, // SERVER_ERROR
+              isRequest: false,
+            },
+            'Service Circuit Break Open\n'
+          )
+        )
+        .encodeHttpResponse()
+
+      .pipeline('deny-http')
+        .replaceMessage(
+          new Message(
+            {
+              status: 503,
+              headers: {
+                'content-type': 'text/plain',
+              },
+            },
+            'Service Unavailable\n'
+          )
+        )
+        .encodeHttpResponse()
 
         //
       // Inbound & Outbound pass to upstream
@@ -288,14 +346,14 @@ spec:
         )
         .link('configure')
 
-      // .task('5s')
-      //   .replaceMessage(
-      //     new Message({
-      //       url: os.env.PIPY_CONFIG || 'http://127.0.0.1:9000/config',
-      //     })
-      //   )
-      //   .use('update.js', 'update')
-      //   .link('configure')
+      .task('5s')
+        .replaceMessage(
+          new Message({
+            url: os.env.PIPY_CONFIG || 'http://127.0.0.1:9000/config',
+          })
+        )
+        .use('update.js', 'update')
+        .link('configure')
 
       .pipeline('configure')
         .handleMessage(
@@ -303,7 +361,14 @@ spec:
             ((config) => (
               config = JSON.decode(msg.body),
               config ? (
-                _g.config = config,
+                config.inbound && (
+                  _g.configInbound = config.inbound,
+                  _g.configInbound.whitelist = config.inbound?.whitelist?.map?.(cidr => new Netmask(cidr))
+                ),
+                config.outbound && (
+                  _g.configOutbound = config.outbound,
+                  _g.configInbound.blacklist = config.inbound?.blacklist?.map?.(cidr => new Netmask(cidr))
+                ),
                 pipy.store.set('config', msg.body.toString()),
                 console.log('Configuration updated.')
               ) : (
@@ -944,7 +1009,7 @@ spec:
                 )
               ),
               pipy.store.set('eureka-services', JSON.stringify(_services)),
-              console.log(JSON.stringify(_services)),
+              console.log('services: ' + JSON.stringify(_services)),
               new Message(msg.head, JSON.encode(data))
             ) : (
               new Message(msg.head, msg.body)
@@ -1032,7 +1097,7 @@ spec:
         .connect(
           () => _url.host
         )
-        // .decodeHttpBodilessResponse()
+        .decodeHttpResponse({bodiless: true})
         .handleMessageStart(
           msg => (
             msg.head.status === 200 && (

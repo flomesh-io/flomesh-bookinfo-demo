@@ -16,7 +16,7 @@ $ k3d cluster create spring-demo -p "81:80@loadbalancer" --k3s-server-arg '--no-
 
 ## 安装 Flomesh
 
-从仓库 `https://github.com/addozhang/flomesh-bookinfo-demo.git` 克隆代码。进入到 `flomesh-bookinfo-demo/kubernetes`目录。
+从仓库 `https://github.com/flomesh-io/flomesh-bookinfo-demo.git` 克隆代码。进入到 `flomesh-bookinfo-demo/kubernetes`目录。
 
 所有 Flomesh 组件以及用于 demo 的 yamls 文件都位于这个目录中。
 
@@ -161,14 +161,14 @@ ingress-pipy-manager-5f568ff988-tw5w6      0/1     Running   0          70s
 
 ## 中间件
 
-Demo 需要用到 clickhouse（用于存储入站和出站的请求信息），有两种方案：使用 pipy 模拟 clickhouse 接收请求；使用 Docker 运行 clickhouse（需要安装 docker-compose）。
+Demo 需要用到中间件完成日志和统计数据的存储，这里为了方便使用 pipy 进行 mock：直接在控制台中打印数据。
 
-这里为了方便，建议使用第一种方案。
+另外，服务治理相关的配置有 mock 的 pipy config 服务提供。
 
-### 使用 Pipy 模拟
+### log & metrics
 
 ```shell
-$ cat > mock.js <<EOF
+$ cat > middleware.js <<EOF
 pipy()
 .listen(8123)
     .link('mock')
@@ -186,105 +186,63 @@ pipy()
     .encodeHttpResponse()
 EOF
 
-$ docker run --rm --name mock --entrypoint "pipy" -v ${PWD}:/script -p 8123:8123 -p 9001:9001 flomesh/pipy-pjs:0.4.0-118 /script/mock.js
+$ docker run --rm --name middleware --entrypoint "pipy" -v ${PWD}:/script -p 8123:8123 -p 9001:9001 flomesh/pipy-pjs:0.4.0-118 /script/middleware.js
 ```
 
-
-### Docker 中运行 
-
-将如下内容保存到
+### pipy config
 
 ```shell
-$ cat > clickhouse.yaml <<EOF
-version: "3"
-services:
-  server:
-    container_name: clickhouse-server
-    image: yandex/clickhouse-server
-    ports:
-      - "8123:8123"
-      - "9000:9000"
-      - "9009:9009"
-
-    ulimits:
-      nproc: 65535
-      nofile:
-        soft: 262144
-        hard: 262144
-  client:
-    container_name: clickhouse-client
-    image: yandex/clickhouse-client
-    command: ["--host", "server"]
-    depends_on:
-      - server
+$ cat > mock-config.json <<EOF
+{
+  "ingress": {},
+  "inbound": {
+    "rateLimit": -1,
+    "dataLimit": -1,
+    "circuitBreak": false,
+    "blacklist": []
+  },
+  "outbound": {
+    "rateLimit": -1,
+    "dataLimit": -1
+  }
+}
 EOF
 
-$ docker-compose -f clickhouse.yaml up -d
-```
+$ cat > mock.js <<EOF
+pipy({
+  _CONFIG_FILENAME: 'mock-config.json',
 
-然后再初始化表 `log`，这里需要用到 [init-log.sql](scripts/init-log.sql) 中定义的 schema：
+  _serveFile: (req, filename, type) => (
+    new Message(
+      {
+        bodiless: req.head.method === 'HEAD',
+        headers: {
+          'etag': os.stat(filename)?.mtime | 0,
+          'content-type': type,
+        },
+      },
+      req.head.method === 'HEAD' ? null : os.readFile(filename),
+    )
+  ),
 
-```sql
-create table log (
-    rid UInt64 default JSONExtractInt(message,'rid'),
-    sid UInt64 default JSONExtractInt(message,'sid'),
-    iid String default JSONExtractString(message,'iid'),
-    dir String default JSONExtractString(message,'dir'),
-    proto String default JSONExtractString(message,'proto'),
-    req String default JSONExtractRaw(message,'req'),
-    `req.id` String default JSONExtractString(req,'id'),
-    `req.protocol` String default JSONExtractString(req,'protocol'),
-    `req.version` String default JSONExtractString(req,'version'),
-    `req.service.name` String default JSONExtractString(req,'service.name'),
-    `req.service.version` String default JSONExtractString(req,'service.version'),
-    `req.method.name` String default JSONExtractString(req,'method.name'),
-    `req.method.type` String default JSONExtractString(req,'method.type'),
-    `req.method` String default JSONExtractString(req,'method'),
-    `req.path` String default JSONExtractString(req,'path'),
-    `req.headers` String default JSONExtractRaw(req,'headers'),
-    `req.body` String default JSONExtractString(req,'body'),
-    `req.arguments` Array(String) default JSONExtractArrayRaw(req,'arguments'),
-    res String default JSONExtractRaw(message,'res'),
-    `res.protocol` String default JSONExtractString(res,'protocol'),
-    `res.type` Int32 default JSONExtractInt(res,'type'),
-    `res.value` String default JSONExtractString(res,'value'),
-    `res.status` UInt32 default JSONExtractInt(res,'status'),
-    `res.statusText` String default JSONExtractString(res,'statusText'),
-    `res.headers` String default JSONExtractRaw(res,'headers'),
-    `res.body` String default JSONExtractString(res,'body'),
-    reqTime UInt64 default JSONExtractInt(message,'reqTime'),
-    resTime UInt64 default JSONExtractInt(message,'resTime'),
-    reqSize UInt64 default JSONExtractInt(message,'reqSize'),
-    resSize UInt64 default JSONExtractInt(message,'resSize'),
-    localAddr String default JSONExtractString(message, 'localAddr'),
-    localPort UInt32 default JSONExtractInt(message, 'localPort'),
-    remoteAddr String default JSONExtractString(message, 'remoteAddr'),
-    remotePort UInt32 default JSONExtractInt(message, 'remotePort'),
-    node String default JSONExtractRaw(message,'node'),
-    `node.ip` String default JSONExtractString(node,'ip'),
-    `node.name` String default JSONExtractString(node,'name'),
-    pod String default JSONExtractRaw(message,'pod'),
-    `pod.ns` String default JSONExtractString(pod,'ns'),
-    `pod.ip` String default JSONExtractString(pod,'ip'),
-    `pod.name` String default JSONExtractString(pod,'name'),
-    service String default JSONExtractRaw(message,'service'),
-    `service.name` String default JSONExtractString(service,'name'),
-    target String default JSONExtractRaw(message,'target'),
-    `target.address` String default JSONExtractString(target,'address'),
-    `target.port` UInt32 default JSONExtractInt(target,'port'),
-    trace String default JSONExtractRaw(message,'trace'),
-    `trace.id` String default JSONExtractString(trace,'id'),
-    `trace.span` String default JSONExtractString(trace,'span'),
-    `trace.parent` String default JSONExtractString(trace,'parent'),
-    `trace.sampled` String default JSONExtractString(trace,'sampled'),
-    `env` String DEFAULT JSONExtractRaw(message, 'env'),
-    id UUID default generateUUIDv4(),
-    targetId UUID,
-    timestamp DateTime default now(),
-    message String
-) engine=MergeTree()
-partition by toYYYYMM(toDateTime(reqTime/1000))
-order by reqTime;
+  _router: new algo.URLRouter({
+    '/config': req => _serveFile(req, _CONFIG_FILENAME, 'application/json'),
+    '/*': () => new Message({ status: 404 }, 'Not found'),
+  }),
+})
+
+// Config
+.listen(9000)
+  .decodeHttpRequest()
+  .replaceMessage(
+    req => (
+      _router.find(req.head.path)(req)
+    )
+  )
+  .encodeHttpResponse()
+EOF
+
+$ docker run --rm --name mock --entrypoint "pipy" -v ${PWD}:/script -p 9000:9000 flomesh/pipy-pjs:0.4.0-118 /script/mock.js
 ```
 
 ## 运行 Demo
@@ -324,18 +282,20 @@ proxy-profile-002-bookinfo   flomesh-spring   false      {"matchLabels":{"sys":"
 
 As the services has startup dependencies, you need to deploy it one by one following the strict order. Before starting, check the **Endpoints** section of **base/clickhouse.yaml**.
 
-提供中间件的访问 endpoid，将 `base/clickhouse.yaml` 和 `base/metrics.yaml` 中的 ip 地址改为本机的 ip 地址（不是 127.0.0.1）。
+提供中间件的访问 endpoid，将 `base/clickhouse.yaml`、`base/metrics.yaml` 和 `base/config.yaml` 中的 ip 地址改为本机的 ip 地址（不是 127.0.0.1）。
 
 修改之后，执行如下命令：
 
 ```shell
 $ kubectl apply -f base/clickhouse.yaml
 $ kubectl apply -f base/metrics.yaml
+$ kubectl apply -f base/config.yaml
 
-$ kubectl get endpoints samples-clickhouse samples-metrics
+$ kubectl get endpoints samples-clickhouse samples-metrics samples-config
 NAME                 ENDPOINTS            AGE
-samples-clickhouse   192.168.1.101:8123   105m
-samples-metrics      192.168.1.101:9001   2m24s
+samples-clickhouse   192.168.1.101:8123   3m
+samples-metrics      192.168.1.101:9001   3s
+samples-config       192.168.1.101:9000   3m
 ```
 
 ### 部署注册中心
@@ -431,6 +391,8 @@ $ curl http://api-v1.flomesh.cn:81/actuator/health
 
 ## 测试
 
+### 灰度
+
 在 v1 版本的服务中，我们为 book 添加 rating 和 review。
 
 ```shell
@@ -456,3 +418,112 @@ $ curl http://$ingressAddr/bookinfo-reviews/reviews/2099a055-1e21-46ef-825e-9e0d
 ![page v1](./docs/images/demo/page-v1.png)
 
 ![page v2](./docs/images/demo/page-v2.png)
+
+### 熔断
+
+这里熔断我们通过修改 `mock-config.json` 中的 `inbound.circuitBreak` 为 `true`，来将服务强制开启熔断：
+
+```json
+{
+  "ingress": {},
+  "inbound": {
+    "rateLimit": -1,
+    "dataLimit": -1,
+    "circuitBreak": true, //here
+    "blacklist": []
+  },
+  "outbound": {
+    "rateLimit": -1,
+    "dataLimit": -1
+    
+  }
+}
+```
+
+```shell
+$ curl http://$ingressAddr/actuator/health -H 'Host: api-v1.flomesh.cn'
+HTTP/1.1 503 Service Unavailable
+Connection: keep-alive
+Content-Length: 27
+
+Service Circuit Break Open
+```
+
+### 限流
+
+修改 pipy config 的配置，将 `inbound.rateLimit` 设置为 1。
+
+```json
+{
+  "ingress": {},
+  "inbound": {
+    "rateLimit": 1, //here
+    "dataLimit": -1,
+    "circuitBreak": false,
+    "blacklist": []
+  },
+  "outbound": {
+    "rateLimit": -1,
+    "dataLimit": -1
+  }
+}
+```
+
+我们使用 `wrk` 模拟发送请求，20 个连接、20 个请求、持续 30s：
+
+```shell
+$ wrk -t20 -c20 -d30s --latency http://$ingressAddr/actuator/health -H 'Host: api-v1.flomesh.cn'
+Running 30s test @ http://127.0.0.1:81/actuator/health
+  20 threads and 20 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   951.51ms  206.23ms   1.04s    93.55%
+    Req/Sec     0.61      1.71    10.00     93.55%
+  Latency Distribution
+     50%    1.00s
+     75%    1.01s
+     90%    1.02s
+     99%    1.03s
+  620 requests in 30.10s, 141.07KB read
+Requests/sec:     20.60
+Transfer/sec:      4.69KB
+```
+
+从结果来看 20.60 req/s，即每个连接 1 req/s。
+
+### 黑白名单
+
+将 pipy config 的 `mock-config.json` 做如下修改：ip 地址使用的是 ingress controller 的 pod ip。
+
+```shell
+$ kgpo -n ingress-pipy ingress-pipy-controller-76cd866d78-4cqqn -o jsonpath='{.status.podIP}'
+10.42.0.78
+```
+
+```json
+{
+  "ingress": {},
+  "inbound": {
+    "rateLimit": -1,
+    "dataLimit": -1,
+    "circuitBreak": false,
+    "blacklist": ["10.42.0.78"] //here
+  },
+  "outbound": {
+    "rateLimit": -1,
+    "dataLimit": -1
+    
+  }
+}
+```
+
+还是访问网关的接口
+
+```shell
+curl http://$ingressAddr/actuator/health -H 'Host: api-v1.flomesh.cn'
+HTTP/1.1 503 Service Unavailable
+content-type: text/plain
+Connection: keep-alive
+Content-Length: 20
+
+Service Unavailable
+```
