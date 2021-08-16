@@ -121,7 +121,7 @@ proxy-injector-5bccc96595-spl6h    1/1     Running   0          39s
 operator-manager-c78bf8d5f-wqgb4   1/1     Running   0          39s
 ```
 
-### 安装 Ingress 控制器
+### 安装 Ingress 控制器：ingress-pipy
 
 ```shell
 $ kubectl apply -f ingress/ingress-pipy.yaml
@@ -289,9 +289,9 @@ order by reqTime;
 
 ## 运行 Demo
 
-Demo 运行在另一个独立的命名空间 `flomesh-spring` 中，执行命令 `kubectl apply -f base/namespace.yaml` 来创建该命名空间。如果你 `describe` 该命名空间你会发现其使用了 `flomesh.io/inject=true` 注解。
+Demo 运行在另一个独立的命名空间 `flomesh-spring` 中，执行命令 `kubectl apply -f base/namespace.yaml` 来创建该命名空间。如果你 `describe` 该命名空间你会发现其使用了 `flomesh.io/inject=true` 标签。
 
-这个注解告知 operator 的 admission webHook 拦截标注的命名空间下 pod 的创建。
+这个标签告知 operator 的 admission webHook 拦截标注的命名空间下 pod 的创建。
 
 ```shell
 $ kubectl describe ns flomesh-spring
