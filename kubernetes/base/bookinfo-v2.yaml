@@ -122,7 +122,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: samples-bookinfo-details
+  name: samples-bookinfo-details-v2
   namespace: flomesh-spring
   labels:
     app: details
@@ -137,6 +137,7 @@ spec:
     targetPort: 8113
   selector:
     app: details
+    version: v2
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -211,7 +212,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: samples-bookinfo-ratings
+  name: samples-bookinfo-ratings-v2
   namespace: flomesh-spring
   labels:
     app: ratings
@@ -226,6 +227,7 @@ spec:
     targetPort: 8111
   selector:
     app: ratings
+    version: v2
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -300,7 +302,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: samples-bookinfo-reviews
+  name: samples-bookinfo-reviews-v2
   namespace: flomesh-spring
   labels:
     app: reviews
@@ -315,6 +317,7 @@ spec:
     targetPort: 8112
   selector:
     app: reviews
+    version: v2
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -387,84 +390,3 @@ spec:
           initialDelaySeconds: 15
           periodSeconds: 30
 ---
-##################################################################################################
-# Productpage services
-##################################################################################################
-#apiVersion: v1
-#kind: Service
-#metadata:
-#  name: samples-bookinfo-productpage
-#  labels:
-#    app: productpage
-#    service: samples-bookinfo-productpage
-#spec:
-#  ports:
-#  - port: 9080
-#    name: http
-#    targetPort: 9080
-#  - port: 9090
-#    name: sidecar
-#    targetPort: 9090
-#  selector:
-#    app: productpage
-#  type: ClusterIP
-#---
-#apiVersion: apps/v1
-#kind: Deployment
-#metadata:
-#  name: samples-bookinfo-productpage-v2
-#  labels:
-#    app: productpage
-#    version: v2
-#spec:
-#  replicas: 1
-#  selector:
-#    matchLabels:
-#      app: productpage
-#      version: v2
-#  template:
-#    metadata:
-#      labels:
-#        app: productpage
-#        version: v2
-#        service: samples-bookinfo-productpage
-#        sys: bookinfo-samples
-#      annotations:
-#        "flomesh.io/inject": "true"
-#    spec:
-#      initContainers:
-#        - name: check-config
-#          image: busybox:latest
-#          command: [ "/bin/sh", "-c" ]
-#          args:
-#            - |-
-#              until nc -vz samples-api-gateway 10000; \
-#                do echo "Waiting for API Gateway ready ..."; \
-#                sleep 5; \
-#              done;
-#      containers:
-#      - name: app
-#        env:
-#        - name: SERVICES_DOMAIN
-#          value: default.svc
-#        - name: K8S_SAMPLES_API_GATEWAY_HOSTNAME
-#          value: samples-api-gateway
-#        - name: K8S_SAMPLES_API_GATEWAY_PORT
-#          value: "10010"
-#        - name: DETAILS_HOSTNAME
-#          value: samples-bookinfo-details
-#        - name: RATINGS_HOSTNAME
-#          value: samples-bookinfo-ratings
-#        - name: REVIEWS_HOSTNAME
-#          value: samples-bookinfo-reviews
-#        - name: K8S_SERVICE_NAME
-#          value: samples-bookinfo-productpage
-#        image: docker.io/flomesh/samples-bookinfo-productpage:latest
-#        imagePullPolicy: Always
-#        ports:
-#        - containerPort: 9080
-#        resources:
-#          limits:
-#            memory: 300Mi
-#            cpu: 100m
-#---

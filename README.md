@@ -414,7 +414,7 @@ $ curl -X POST http://$ingressAddr/bookinfo-reviews/reviews \
 $ curl http://$ingressAddr/bookinfo-reviews/reviews/2099a055-1e21-46ef-825e-9e0de93554ea -H "Host: api-v1.flomesh.cn"
 ```
 
-执行上面的命令之后，我们可以在浏览器中访问前端服务（`http://fe-v1.flomesh.cn:81/productpage?u=normal`、 `http://fe-v1.flomesh.cn:82/productpage?u=normal`），只有 v1 版本的前端中才能看到刚才添加的记录。
+执行上面的命令之后，我们可以在浏览器中访问前端服务（`http://fe-v1.flomesh.cn:81/productpage?u=normal`、 `http://fe-v2.flomesh.cn:81/productpage?u=normal`），只有 v1 版本的前端中才能看到刚才添加的记录。
 
 ![page v1](./docs/images/demo/page-v1.png)
 
