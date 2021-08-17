@@ -65,7 +65,7 @@ spec:
               value: samples-api-gateway-v2
             - name: K8S_SAMPLES_API_GATEWAY_PORT
               value: "10010"
-          image: addozhang/samples-bookinfo-productpage:latest
+          image: flomesh/samples-bookinfo-productpage:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9080
