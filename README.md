@@ -356,6 +356,7 @@ $ kubectl apply -f ingress/ingress.yaml
 ### 测试前的准备
 
 访问 demo 服务都要通过 ingress 控制器。因此需要先获取 LB 的 ip 地址。
+
 ```shell
 //Obtain the controller IP
 //Here, we append port. 

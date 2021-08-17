@@ -60,7 +60,7 @@ spec:
               config:
                 additionalProperties:
                   type: string
-                description: Config contains the pipy configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field.
+                description: Config contains the pipy configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. This option is mutually exclusive with ConfigUrl option, you can only have either one.
                 type: object
               configUrl:
                 description: Url without script name from where pipy Config will be pulled. This option is mutually exclusive with Config option, you can only either one The valid format is protocol://IP:port/context - protocol is http/https - IP is either IP address or valid DNS name - port is the port number, which is between 1 and 65535
@@ -248,7 +248,7 @@ spec:
                 description: Config contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. This option is mutually exclusive with ConfigUrl option, you can only have either one.
                 type: object
               configUrl:
-                description: Url without script name from where pipy Config will be pulled. This option is mutually exclusive with Config option, you can only either one The valid format is protocol://IP:port/context - protocol is http/https - IP is either IP address or valid DNS name - port is the port number, which is between 1 and 65535
+                description: Url without script name from where pipy Config will be pulled. This option is mutually exclusive with Config option, you can only have either one The valid format is protocol://IP:port/context - protocol is http/https - IP is either IP address or valid DNS name - port is the port number, which is between 1 and 65535
                 type: string
               disabled:
                 default: false
@@ -258,7 +258,7 @@ spec:
                 description: Namespace ProxyProfile will only match the pods in the namespace otherwise, match pods in all namespaces(in cluster)
                 type: string
               selector:
-                description: selector is a label query over pods that should be injected
+                description: Selector is a label query over pods that should be injected
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
@@ -476,6 +476,7 @@ spec:
                   required:
                   - name
                   type: object
+                minItems: 1
                 type: array
             type: object
           status:
@@ -787,6 +788,7 @@ spec:
   ports:
   - name: https
     port: 8443
+    protocol: TCP
     targetPort: https
   selector:
     app.kubernetes.io/instance: operator-manager
@@ -801,6 +803,7 @@ metadata:
 spec:
   ports:
   - port: 443
+    protocol: TCP
     targetPort: 7443
   selector:
     app.kubernetes.io/instance: proxy-injector
@@ -814,6 +817,7 @@ metadata:
 spec:
   ports:
   - port: 443
+    protocol: TCP
     targetPort: 9443
   selector:
     app.kubernetes.io/instance: operator-manager
@@ -849,7 +853,7 @@ spec:
         - --v=2
         command:
         - /operator-manager
-        image: flomesh/operator-manager:0.4.1
+        image: flomesh/operator-manager:0.4.2
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -917,11 +921,11 @@ spec:
       - args:
         - --enable-leader-election
         - --proxy-image=flomesh/pipy-pjs:0.4.0-118
-        - --proxy-init-image=flomesh/proxy-init:0.4.1
+        - --proxy-init-image=flomesh/proxy-init:0.4.2
         - --v=2
         command:
         - /proxy-injector
-        image: flomesh/proxy-injector:0.4.1
+        image: flomesh/proxy-injector:0.4.2
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -988,7 +992,7 @@ kind: MutatingWebhookConfiguration
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: flomesh/serving-cert
-  name: mutating-webhook-configuration
+  name: pipy-op-mutating-webhook-cfg
 webhooks:
 - admissionReviewVersions:
   - v1
