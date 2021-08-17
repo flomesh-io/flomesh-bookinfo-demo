@@ -1,0 +1,395 @@
+# Copyright 2017 Istio Authors
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+##################################################################################################
+# This file defines the services, service accounts, and deployments for the Bookinfo sample.
+#
+# To apply all 4 Bookinfo services, their corresponding service accounts, and deployments:
+#
+#   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
+#
+# Alternatively, you can deploy any resource separately:
+#
+#   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml -l service=reviews # reviews Service
+#   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml -l account=reviews # reviews ServiceAccount
+#   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml -l app=reviews,version=v3 # reviews-v3 Deployment
+##################################################################################################
+##################################################################################################
+# API Gateway
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: samples-api-gateway-v1
+  namespace: flomesh-spring
+  labels:
+    app: gateway
+    service: samples-api-gateway-v1
+spec:
+  ports:
+    - port: 10000
+      name: http
+      targetPort: 10000
+    - port: 10010
+      name: sidecar
+      targetPort: 10010
+  selector:
+    app: gateway
+    version: v1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: samples-api-gateway-v1
+  namespace: flomesh-spring
+  labels:
+    app: gateway
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: gateway
+        version: v1
+        service: samples-api-gateway
+        sys: bookinfo-samples
+      annotations:
+        "flomesh.io/inject": "true"
+        "service.flomesh.io/name": "samples-api-gateway"
+        "service.flomesh.io/port": "10000"
+    spec:
+      initContainers:
+        - name: check-config
+          image: busybox:latest
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - |-
+              until nc -vz samples-config-service 8888; \
+                do echo "Waiting for config service ready ..."; \
+                sleep 5; \
+              done;
+      containers:
+        - name: app
+          image: docker.io/flomesh/samples-api-gateway:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 10000
+          env:
+            - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
+              value: samples-discovery-server
+            - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
+              value: "8761"
+            - name: K8S_SERVICE_NAME
+              value: samples-api-gateway
+          resources:
+            limits:
+              memory: 300Mi
+            requests:
+              memory: 300Mi
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 10000
+            initialDelaySeconds: 30
+            periodSeconds: 60
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 10000
+            initialDelaySeconds: 15
+            periodSeconds: 30
+---
+
+##################################################################################################
+# Details service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: samples-bookinfo-details-v1
+  namespace: flomesh-spring
+  labels:
+    app: details
+    service: samples-bookinfo-details
+spec:
+  ports:
+  - port: 8103
+    name: http
+    targetPort: 8103
+  - port: 8113
+    name: sidecar
+    targetPort: 8113
+  selector:
+    app: details
+    version: v1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: samples-bookinfo-details-v1
+  namespace: flomesh-spring
+  labels:
+    app: details
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: details
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: details
+        version: v1
+        service: samples-bookinfo-details
+        sys: bookinfo-samples
+      annotations:
+        "flomesh.io/inject": "true"
+        "service.flomesh.io/name": "samples-bookinfo-details"
+        "service.flomesh.io/port": "8103"
+    spec:
+      initContainers:
+        - name: check-config
+          image: busybox:latest
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - |-
+              until nc -vz samples-config-service 8888; \
+                do echo "Waiting for config service ready ..."; \
+                sleep 5; \
+              done;
+      containers:
+      - name: app
+        image: docker.io/flomesh/samples-bookinfo-details:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8103
+        env:
+          - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
+#            value: samples-discovery-server
+            value: 127.0.0.1
+          - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
+            value: "8771"
+          - name: K8S_SERVICE_NAME
+            value: samples-bookinfo-details
+        resources:
+          limits:
+            memory: 300Mi
+          requests:
+            memory: 300Mi
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8103
+          initialDelaySeconds: 30
+          periodSeconds: 60
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8103
+          initialDelaySeconds: 15
+          periodSeconds: 30
+---
+##################################################################################################
+# Ratings service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: samples-bookinfo-ratings-v1
+  namespace: flomesh-spring
+  labels:
+    app: ratings
+    service: samples-bookinfo-ratings
+spec:
+  ports:
+  - port: 8101
+    name: http
+    targetPort: 8101
+  - port: 8111
+    name: sidecar
+    targetPort: 8111
+  selector:
+    app: ratings
+    version: v1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: samples-bookinfo-ratings-v1
+  namespace: flomesh-spring
+  labels:
+    app: ratings
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ratings
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: ratings
+        version: v1
+        service: samples-bookinfo-ratings
+        sys: bookinfo-samples
+      annotations:
+        "flomesh.io/inject": "true"
+        "service.flomesh.io/name": "samples-bookinfo-ratings"
+        "service.flomesh.io/port": "8101"
+    spec:
+      initContainers:
+        - name: check-config
+          image: busybox:latest
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - |-
+              until nc -vz samples-config-service 8888; \
+                do echo "Waiting for config service ready ..."; \
+                sleep 5; \
+              done;
+      containers:
+      - name: app
+        image: docker.io/flomesh/samples-bookinfo-ratings:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8101
+        env:
+          - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
+#            value: samples-discovery-server
+            value: 127.0.0.1
+          - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
+            value: "8771"
+          - name: K8S_SERVICE_NAME
+            value: samples-bookinfo-ratings
+        resources:
+          limits:
+            memory: 600Mi
+          requests:
+            memory: 600Mi
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8101
+          initialDelaySeconds: 30
+          periodSeconds: 60
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8101
+          initialDelaySeconds: 15
+          periodSeconds: 30
+---
+##################################################################################################
+# Reviews service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: samples-bookinfo-reviews-v1
+  namespace: flomesh-spring
+  labels:
+    app: reviews
+    service: samples-bookinfo-reviews
+spec:
+  ports:
+  - port: 8102
+    name: http
+    targetPort: 8102
+  - port: 8112
+    name: sidecar
+    targetPort: 8112
+  selector:
+    app: reviews
+    version: v1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: samples-bookinfo-reviews-v1
+  namespace: flomesh-spring
+  labels:
+    app: reviews
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reviews
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: reviews
+        version: v1
+        service: samples-bookinfo-reviews
+        sys: bookinfo-samples
+      annotations:
+        "flomesh.io/inject": "true"
+        "service.flomesh.io/name": "samples-bookinfo-reviews"
+        "service.flomesh.io/port": "8102"
+    spec:
+      initContainers:
+        - name: check-config
+          image: busybox:latest
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - |-
+              until nc -vz samples-config-service 8888; \
+                do echo "Waiting for config service ready ..."; \
+                sleep 5; \
+              done;
+      containers:
+      - name: app
+        image: docker.io/flomesh/samples-bookinfo-reviews:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8102
+        env:
+          - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
+#            value: samples-discovery-server
+            value: 127.0.0.1
+          - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
+            value: "8771"
+          - name: K8S_SAMPLES_BOOKINFO_RATINGS_HOSTNAME
+            value: samples-bookinfo-ratings
+          - name: K8S_SAMPLES_BOOKINFO_RATINGS_PORT
+            value: "8111"
+          - name: K8S_SERVICE_NAME
+            value: samples-bookinfo-reviews
+        resources:
+          limits:
+            memory: 600Mi
+          requests:
+            memory: 600Mi
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8102
+          initialDelaySeconds: 30
+          periodSeconds: 60
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8102
+          initialDelaySeconds: 15
+          periodSeconds: 30
+---

@@ -31,10 +31,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: samples-api-gateway
+  name: samples-api-gateway-v2
+  namespace: flomesh-spring
   labels:
     app: gateway
-    service: samples-api-gateway
+    service: samples-api-gateway-v2
 spec:
   ports:
     - port: 10000
@@ -45,29 +46,33 @@ spec:
       targetPort: 10010
   selector:
     app: gateway
+    version: v2
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: samples-api-gateway-v1
+  name: samples-api-gateway-v2
+  namespace: flomesh-spring
   labels:
     app: gateway
-    version: v1
+    version: v2
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: gateway
-      version: v1
+      version: v2
   template:
     metadata:
       labels:
         app: gateway
-        version: v1
+        version: v2
         service: samples-api-gateway
         sys: bookinfo-samples
       annotations:
         "flomesh.io/inject": "true"
+        "service.flomesh.io/name": "samples-api-gateway"
+        "service.flomesh.io/port": "10000"
     spec:
       initContainers:
         - name: check-config
@@ -89,7 +94,7 @@ spec:
             - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
               value: samples-discovery-server
             - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
-              value: "8771"
+              value: "8761"
             - name: K8S_SERVICE_NAME
               value: samples-api-gateway
           resources:
@@ -117,7 +122,8 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: samples-bookinfo-details
+  name: samples-bookinfo-details-v2
+  namespace: flomesh-spring
   labels:
     app: details
     service: samples-bookinfo-details
@@ -131,29 +137,33 @@ spec:
     targetPort: 8113
   selector:
     app: details
+    version: v2
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: samples-bookinfo-details-v1
+  name: samples-bookinfo-details-v2
+  namespace: flomesh-spring
   labels:
     app: details
-    version: v1
+    version: v2
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: details
-      version: v1
+      version: v2
   template:
     metadata:
       labels:
         app: details
-        version: v1
+        version: v2
         service: samples-bookinfo-details
         sys: bookinfo-samples
       annotations:
         "flomesh.io/inject": "true"
+        "service.flomesh.io/name": "samples-bookinfo-details"
+        "service.flomesh.io/port": "8103"
     spec:
       initContainers:
         - name: check-config
@@ -175,7 +185,7 @@ spec:
           - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
             value: samples-discovery-server
           - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
-            value: "8771"
+            value: "8761"
           - name: K8S_SERVICE_NAME
             value: samples-bookinfo-details
         resources:
@@ -202,7 +212,8 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: samples-bookinfo-ratings
+  name: samples-bookinfo-ratings-v2
+  namespace: flomesh-spring
   labels:
     app: ratings
     service: samples-bookinfo-ratings
@@ -216,29 +227,33 @@ spec:
     targetPort: 8111
   selector:
     app: ratings
+    version: v2
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: samples-bookinfo-ratings-v1
+  name: samples-bookinfo-ratings-v2
+  namespace: flomesh-spring
   labels:
     app: ratings
-    version: v1
+    version: v2
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: ratings
-      version: v1
+      version: v2
   template:
     metadata:
       labels:
         app: ratings
-        version: v1
+        version: v2
         service: samples-bookinfo-ratings
         sys: bookinfo-samples
       annotations:
         "flomesh.io/inject": "true"
+        "service.flomesh.io/name": "samples-bookinfo-ratings"
+        "service.flomesh.io/port": "8101"
     spec:
       initContainers:
         - name: check-config
@@ -260,7 +275,7 @@ spec:
           - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
             value: samples-discovery-server
           - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
-            value: "8771"
+            value: "8761"
           - name: K8S_SERVICE_NAME
             value: samples-bookinfo-ratings
         resources:
@@ -287,7 +302,8 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: samples-bookinfo-reviews
+  name: samples-bookinfo-reviews-v2
+  namespace: flomesh-spring
   labels:
     app: reviews
     service: samples-bookinfo-reviews
@@ -301,29 +317,33 @@ spec:
     targetPort: 8112
   selector:
     app: reviews
+    version: v2
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: samples-bookinfo-reviews-v1
+  name: samples-bookinfo-reviews-v2
+  namespace: flomesh-spring
   labels:
     app: reviews
-    version: v1
+    version: v2
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: reviews
-      version: v1
+      version: v2
   template:
     metadata:
       labels:
         app: reviews
-        version: v1
+        version: v2
         service: samples-bookinfo-reviews
         sys: bookinfo-samples
       annotations:
         "flomesh.io/inject": "true"
+        "service.flomesh.io/name": "samples-bookinfo-reviews"
+        "service.flomesh.io/port": "8102"
     spec:
       initContainers:
         - name: check-config
@@ -345,7 +365,7 @@ spec:
           - name: K8S_SAMPLES_DISCOVERY_SERVER_HOSTNAME
             value: samples-discovery-server
           - name: K8S_SAMPLES_DISCOVERY_SERVER_PORT
-            value: "8771"
+            value: "8761"
           - name: K8S_SAMPLES_BOOKINFO_RATINGS_HOSTNAME
             value: samples-bookinfo-ratings
           - name: K8S_SAMPLES_BOOKINFO_RATINGS_PORT
@@ -370,84 +390,3 @@ spec:
           initialDelaySeconds: 15
           periodSeconds: 30
 ---
-##################################################################################################
-# Productpage services
-##################################################################################################
-#apiVersion: v1
-#kind: Service
-#metadata:
-#  name: samples-bookinfo-productpage
-#  labels:
-#    app: productpage
-#    service: samples-bookinfo-productpage
-#spec:
-#  ports:
-#  - port: 9080
-#    name: http
-#    targetPort: 9080
-#  - port: 9090
-#    name: sidecar
-#    targetPort: 9090
-#  selector:
-#    app: productpage
-#  type: ClusterIP
-#---
-#apiVersion: apps/v1
-#kind: Deployment
-#metadata:
-#  name: samples-bookinfo-productpage-v1
-#  labels:
-#    app: productpage
-#    version: v1
-#spec:
-#  replicas: 1
-#  selector:
-#    matchLabels:
-#      app: productpage
-#      version: v1
-#  template:
-#    metadata:
-#      labels:
-#        app: productpage
-#        version: v1
-#        service: samples-bookinfo-productpage
-#        sys: bookinfo-samples
-#      annotations:
-#        "flomesh.io/inject": "true"
-#    spec:
-#      initContainers:
-#        - name: check-config
-#          image: busybox:latest
-#          command: [ "/bin/sh", "-c" ]
-#          args:
-#            - |-
-#              until nc -vz samples-api-gateway 10000; \
-#                do echo "Waiting for API Gateway ready ..."; \
-#                sleep 5; \
-#              done;
-#      containers:
-#      - name: app
-#        env:
-#        - name: SERVICES_DOMAIN
-#          value: default.svc
-#        - name: K8S_SAMPLES_API_GATEWAY_HOSTNAME
-#          value: samples-api-gateway
-#        - name: K8S_SAMPLES_API_GATEWAY_PORT
-#          value: "10010"
-#        - name: DETAILS_HOSTNAME
-#          value: samples-bookinfo-details
-#        - name: RATINGS_HOSTNAME
-#          value: samples-bookinfo-ratings
-#        - name: REVIEWS_HOSTNAME
-#          value: samples-bookinfo-reviews
-#        - name: K8S_SERVICE_NAME
-#          value: samples-bookinfo-productpage
-#        image: docker.io/flomesh/samples-bookinfo-productpage:latest
-#        imagePullPolicy: Always
-#        ports:
-#        - containerPort: 9080
-#        resources:
-#          limits:
-#            memory: 300Mi
-#            cpu: 100m
-#---

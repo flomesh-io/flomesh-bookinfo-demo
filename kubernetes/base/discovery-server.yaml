@@ -5,6 +5,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: samples-discovery-server
+  namespace: flomesh-spring
   labels:
     app: discovery
     service: samples-discovery-server
@@ -23,6 +24,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: samples-discovery-server-v1
+  namespace: flomesh-spring
   labels:
     app: discovery
     version: v1
@@ -41,6 +43,8 @@ spec:
         sys: bookinfo-samples
       annotations:
         "flomesh.io/inject": "true"
+        "service.flomesh.io/name": "samples-discovery-server"
+        "service.flomesh.io/port": "8761"
     spec:
       containers:
         - name: app

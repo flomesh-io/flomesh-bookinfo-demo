@@ -1,0 +1,10 @@
+---
+# Source: dubbo-mesh/templates/namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/name: spring-mesh
+    app.kubernetes.io/version: "1.19.0"
+    flomesh.io/inject: "true"
+  name: flomesh-spring

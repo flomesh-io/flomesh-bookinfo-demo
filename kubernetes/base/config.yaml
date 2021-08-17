@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: samples-config
+  namespace: flomesh-spring
+  labels:
+    app: config
+    service: config
+subsets:
+  - addresses:
+      - ip: 10.0.0.60
+    ports:
+      - name: pg
+        port: 9000
+        protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: samples-config
+  namespace: flomesh-spring
+  labels:
+    app: config
+    service: config
+spec:
+  ports:
+    - port: 9000
+      name: pg
+      targetPort: 9000
+---

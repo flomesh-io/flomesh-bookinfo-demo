@@ -1,132 +1,130 @@
-# Topology
-![Topology](docs/images/bookinfo-samples-topology.png)
+# Spring Bookinfo Demo Quickstart
 
+## 架构
 
-# Prerequisites
-- Kubernetes/k3s 1.19+
-- CPU: 2 cores and Memory: 8G is recommanded
+![typology](docs/images/demo/spring-demo-architect.png)
 
-# Build
+## 环境搭建
 
-* For config-service, discovery-server, api-gateway, ratings, reviews, details, use mvn to build that
-	```shell
-	mvn clean package
-	```
-	It will generate Spring Boot fat *jar* file in each dir targets subdir
+搭建 Kubernetes 环境，可以选择 kubeadm 进行集群搭建。也可以选择 minikube、k3s、Kind 等，本文使用 k3s。
 
-* For productpage, it's written in Node.js, you need to have node installed in advance.
-	```shell
-	cd productpage
-    	npm install
-	```
+使用 [k3d](https://k3d.io/) 安装 [k3s](https://github.com/k3s-io/k3s)。k3d 将在 Docker 容器中运行 k3s，因此需要保证已经安装了 Docker。
 
-
-
-
-# Deploy to Kubernetes/K3s & Test
-
-## Deploy pipy-operator
-Check out [pipy-operator](https://github.com/flomesh-io/pipy-operator) code, enter the root folder of this project.
-* Install Cert Manager v1.3.1
-  	```shell
-	root@bookinfo:~/pipy-operator# kubectl apply -f etc/cert-manager-v1.3.1.yaml
-	
-	customresourcedefinition.apiextensions.k8s.io/certificaterequests.cert-manager.io created
-	customresourcedefinition.apiextensions.k8s.io/certificates.cert-manager.io created
-	customresourcedefinition.apiextensions.k8s.io/challenges.acme.cert-manager.io created
-	customresourcedefinition.apiextensions.k8s.io/clusterissuers.cert-manager.io created
-	customresourcedefinition.apiextensions.k8s.io/issuers.cert-manager.io created
-	customresourcedefinition.apiextensions.k8s.io/orders.acme.cert-manager.io created
-	namespace/cert-manager created
-	serviceaccount/cert-manager-cainjector created
-	serviceaccount/cert-manager created
-	serviceaccount/cert-manager-webhook created
-	clusterrole.rbac.authorization.k8s.io/cert-manager-cainjector created
-	clusterrole.rbac.authorization.k8s.io/cert-manager-controller-issuers created
-	clusterrole.rbac.authorization.k8s.io/cert-manager-controller-clusterissuers created
-	clusterrole.rbac.authorization.k8s.io/cert-manager-controller-certificates created
-	clusterrole.rbac.authorization.k8s.io/cert-manager-controller-orders created
-	clusterrole.rbac.authorization.k8s.io/cert-manager-controller-challenges created
-	clusterrole.rbac.authorization.k8s.io/cert-manager-controller-ingress-shim created
-	clusterrole.rbac.authorization.k8s.io/cert-manager-view created
-	clusterrole.rbac.authorization.k8s.io/cert-manager-edit created
-	clusterrole.rbac.authorization.k8s.io/cert-manager-controller-approve:cert-manager-io created
-	clusterrole.rbac.authorization.k8s.io/cert-manager-webhook:subjectaccessreviews created
-	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-cainjector created
-	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-issuers created
-	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-clusterissuers created
-	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-certificates created
-	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-orders created
-	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-challenges created
-	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-ingress-shim created
-	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-approve:cert-manager-io created
-	clusterrolebinding.rbac.authorization.k8s.io/cert-manager-webhook:subjectaccessreviews created
-	role.rbac.authorization.k8s.io/cert-manager-cainjector:leaderelection created
-	role.rbac.authorization.k8s.io/cert-manager:leaderelection created
-	role.rbac.authorization.k8s.io/cert-manager-webhook:dynamic-serving created
-	rolebinding.rbac.authorization.k8s.io/cert-manager-cainjector:leaderelection created
-	rolebinding.rbac.authorization.k8s.io/cert-manager:leaderelection created
-	rolebinding.rbac.authorization.k8s.io/cert-manager-webhook:dynamic-serving created
-	service/cert-manager created
-	service/cert-manager-webhook created
-	deployment.apps/cert-manager-cainjector created
-	deployment.apps/cert-manager created
-	deployment.apps/cert-manager-webhook created
-	mutatingwebhookconfiguration.admissionregistration.k8s.io/cert-manager-webhook created
-	validatingwebhookconfiguration.admissionregistration.k8s.io/cert-manager-webhook created
-	```
-
-	Wait for the pods in **cert-manager** namespace are all running.
-	```shell
-	[root@crd ~]# kubectl get pods -n cert-manager
-	NAMESPACE      NAME                                      READY   STATUS      RESTARTS   AGE
-	cert-manager   cert-manager-6865f45f85-7gjcb             1/1     Running     0          9h
-	cert-manager   cert-manager-cainjector-fdbc9f44-8xv27    1/1     Running     0          9h
-	cert-manager   cert-manager-webhook-5d59497545-vdchs     1/1     Running     0          9h
-	```
-* Install Operator
-  	```shell
-	kubectl apply -f artifact/pipy-operator.yaml
-	```
-
- 	You should see the output like this：
-	```shell
-	namespace/flomesh-system created
-	customresourcedefinition.apiextensions.k8s.io/proxies.flomesh.io created
-	customresourcedefinition.apiextensions.k8s.io/proxyprofiles.flomesh.io created
-	serviceaccount/flomesh-controller-manager created
-	role.rbac.authorization.k8s.io/flomesh-leader-election-role created
-	clusterrole.rbac.authorization.k8s.io/flomesh-manager-role created
-	clusterrole.rbac.authorization.k8s.io/flomesh-metrics-reader created
-	clusterrole.rbac.authorization.k8s.io/flomesh-proxy-role created
-	rolebinding.rbac.authorization.k8s.io/flomesh-leader-election-rolebinding created
-	clusterrolebinding.rbac.authorization.k8s.io/flomesh-manager-rolebinding created
-	clusterrolebinding.rbac.authorization.k8s.io/flomesh-proxy-rolebinding created
-	configmap/flomesh-manager-config created
-	configmap/flomesh-proxy-injector-tpl created
-	service/flomesh-controller-manager-metrics-service created
-	service/flomesh-pipy-sidecar-injector-service created
-	service/flomesh-webhook-service created
-	deployment.apps/flomesh-controller-manager created
-	deployment.apps/flomesh-pipy-sidecar-injector created
-	certificate.cert-manager.io/flomesh-serving-cert created
-	issuer.cert-manager.io/flomesh-selfsigned-issuer created
-	mutatingwebhookconfiguration.admissionregistration.k8s.io/flomesh-mutating-webhook-configuration created
-	mutatingwebhookconfiguration.admissionregistration.k8s.io/flomesh-sidecar-injector-webhook-configuration created
-	validatingwebhookconfiguration.admissionregistration.k8s.io/flomesh-validating-webhook-configuration created
-	```
-
-	Check the status of pods in **flomesh-system** namespace, ensure all pods are running：
-	```shell
-	[root@crd pipy-operator]# kubectl get pods -n flomesh-system
-	NAMESPACE        NAME                                               READY   STATUS            RESTARTS   AGE
-	flomesh-system   flomesh-pipy-sidecar-injector-69bb969f57-78n2z     1/1     Running           0          16m
-	flomesh-system   flomesh-controller-manager-55fb9565bb-rrhqq        2/2     Running           0          16m
-	```
-## Deploy ingress-pipy(Ingress Controller)
 ```shell
-root@bookinfo:/vagrant/kubernetes# kubectl apply -f ingress/ingress-pipy.yaml 
+$ k3d cluster create spring-demo -p "81:80@loadbalancer" --k3s-server-arg '--no-deploy=traefik'
+```
 
+## 安装 Flomesh
+
+从仓库 `https://github.com/flomesh-io/flomesh-bookinfo-demo.git` 克隆代码。进入到 `flomesh-bookinfo-demo/kubernetes`目录。
+
+所有 Flomesh 组件以及用于 demo 的 yamls 文件都位于这个目录中。
+
+### 安装 Cert Manager
+
+```shell
+$ kubectl apply -f artifacts/cert-manager-v1.3.1.yaml
+customresourcedefinition.apiextensions.k8s.io/certificaterequests.cert-manager.io created
+customresourcedefinition.apiextensions.k8s.io/certificates.cert-manager.io created
+customresourcedefinition.apiextensions.k8s.io/challenges.acme.cert-manager.io created
+customresourcedefinition.apiextensions.k8s.io/clusterissuers.cert-manager.io created
+customresourcedefinition.apiextensions.k8s.io/issuers.cert-manager.io created
+customresourcedefinition.apiextensions.k8s.io/orders.acme.cert-manager.io created
+namespace/cert-manager created
+serviceaccount/cert-manager-cainjector created
+serviceaccount/cert-manager created
+serviceaccount/cert-manager-webhook created
+clusterrole.rbac.authorization.k8s.io/cert-manager-cainjector created
+clusterrole.rbac.authorization.k8s.io/cert-manager-controller-issuers created
+clusterrole.rbac.authorization.k8s.io/cert-manager-controller-clusterissuers created
+clusterrole.rbac.authorization.k8s.io/cert-manager-controller-certificates created
+clusterrole.rbac.authorization.k8s.io/cert-manager-controller-orders created
+clusterrole.rbac.authorization.k8s.io/cert-manager-controller-challenges created
+clusterrole.rbac.authorization.k8s.io/cert-manager-controller-ingress-shim created
+clusterrole.rbac.authorization.k8s.io/cert-manager-view created
+clusterrole.rbac.authorization.k8s.io/cert-manager-edit created
+clusterrole.rbac.authorization.k8s.io/cert-manager-controller-approve:cert-manager-io created
+clusterrole.rbac.authorization.k8s.io/cert-manager-webhook:subjectaccessreviews created
+clusterrolebinding.rbac.authorization.k8s.io/cert-manager-cainjector created
+clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-issuers created
+clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-clusterissuers created
+clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-certificates created
+clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-orders created
+clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-challenges created
+clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-ingress-shim created
+clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-approve:cert-manager-io created
+clusterrolebinding.rbac.authorization.k8s.io/cert-manager-webhook:subjectaccessreviews created
+role.rbac.authorization.k8s.io/cert-manager-cainjector:leaderelection created
+role.rbac.authorization.k8s.io/cert-manager:leaderelection created
+role.rbac.authorization.k8s.io/cert-manager-webhook:dynamic-serving created
+rolebinding.rbac.authorization.k8s.io/cert-manager-cainjector:leaderelection created
+rolebinding.rbac.authorization.k8s.io/cert-manager:leaderelection created
+rolebinding.rbac.authorization.k8s.io/cert-manager-webhook:dynamic-serving created
+service/cert-manager created
+service/cert-manager-webhook created
+deployment.apps/cert-manager-cainjector created
+deployment.apps/cert-manager created
+deployment.apps/cert-manager-webhook created
+mutatingwebhookconfiguration.admissionregistration.k8s.io/cert-manager-webhook created
+validatingwebhookconfiguration.admissionregistration.k8s.io/cert-manager-webhook created
+```
+
+注意: 要保证 `cert-manager` 命名空间中所有的 pod 都正常运行：
+
+```shell
+$ kubectl get pod -n cert-manager
+NAME                                       READY   STATUS    RESTARTS   AGE
+cert-manager-webhook-56fdcbb848-q7fn5      1/1     Running   0          98s
+cert-manager-59f6c76f4b-z5lgf              1/1     Running   0          98s
+cert-manager-cainjector-59f76f7fff-flrr7   1/1     Running   0          98s
+```
+
+### 安装 Pipy Operator
+
+```shell
+$ kubectl apply -f artifacts/pipy-operator.yaml
+```
+
+执行完命令后会看到类似的结果：
+
+```
+namespace/flomesh created
+customresourcedefinition.apiextensions.k8s.io/proxies.flomesh.io created
+customresourcedefinition.apiextensions.k8s.io/proxyprofiles.flomesh.io created
+serviceaccount/operator-manager created
+role.rbac.authorization.k8s.io/leader-election-role created
+clusterrole.rbac.authorization.k8s.io/manager-role created
+clusterrole.rbac.authorization.k8s.io/metrics-reader created
+clusterrole.rbac.authorization.k8s.io/proxy-role created
+rolebinding.rbac.authorization.k8s.io/leader-election-rolebinding created
+clusterrolebinding.rbac.authorization.k8s.io/manager-rolebinding created
+clusterrolebinding.rbac.authorization.k8s.io/proxy-rolebinding created
+configmap/manager-config created
+service/operator-manager-metrics-service created
+service/proxy-injector-svc created
+service/webhook-service created
+deployment.apps/operator-manager created
+deployment.apps/proxy-injector created
+certificate.cert-manager.io/serving-cert created
+issuer.cert-manager.io/selfsigned-issuer created
+mutatingwebhookconfiguration.admissionregistration.k8s.io/mutating-webhook-configuration created
+mutatingwebhookconfiguration.admissionregistration.k8s.io/proxy-injector-webhook-cfg created
+validatingwebhookconfiguration.admissionregistration.k8s.io/validating-webhook-configuration created
+```
+
+注意：要保证 `flomesh` 命名空间中所有的 pod 都正常运行：
+
+```shell
+$ kubectl get pod -n flomesh
+NAME                               READY   STATUS    RESTARTS   AGE
+proxy-injector-5bccc96595-spl6h    1/1     Running   0          39s
+operator-manager-c78bf8d5f-wqgb4   1/1     Running   0          39s
+```
+
+### 安装 Ingress 控制器：ingress-pipy
+
+```shell
+$ kubectl apply -f ingress/ingress-pipy.yaml
 namespace/ingress-pipy created
 customresourcedefinition.apiextensions.k8s.io/ingressparameters.flomesh.io created
 serviceaccount/ingress-pipy created
@@ -144,286 +142,389 @@ deployment.apps/ingress-pipy-controller created
 deployment.apps/ingress-pipy-manager created
 certificate.cert-manager.io/serving-cert created
 issuer.cert-manager.io/selfsigned-issuer created
-mutatingwebhookconfiguration.admissionregistration.k8s.io/mutating-webhook-configuration created
-validatingwebhookconfiguration.admissionregistration.k8s.io/validating-webhook-configuration created
+mutatingwebhookconfiguration.admissionregistration.k8s.io/mutating-webhook-configuration configured
+validatingwebhookconfiguration.admissionregistration.k8s.io/validating-webhook-configuration configured
 ```
 
-Check the status of pods in **ingress-pipy** namespace, ensure all pods are running：
+检查 `ingress-pipy` 命名空间下 pod 的状态：
+
 ```shell
-root@bookinfo:/vagrant/kubernetes# kubectl get po -n ingress-pipy 
+$ kubectl get pod -n ingress-pipy
 NAME                                       READY   STATUS    RESTARTS   AGE
-svclb-ingress-pipy-controller-p8h9g        1/1     Running   0          2m58s
-ingress-pipy-cfg-6856d674f7-zcgbr          1/1     Running   0          2m58s
-ingress-pipy-controller-76cd866d78-bcmb5   1/1     Running   0          2m58s
-ingress-pipy-manager-6dddc98484-q4ls5      1/1     Running   0          2m58s
+svclb-ingress-pipy-controller-8pk8k        1/1     Running   0          71s
+ingress-pipy-cfg-6bc649cfc7-8njk7          1/1     Running   0          71s
+ingress-pipy-controller-76cd866d78-m7gfp   1/1     Running   0          71s
+ingress-pipy-manager-5f568ff988-tw5w6      0/1     Running   0          70s
 ```
 
+至此，你已经成功安装 Flomesh 的所有组件，包括 operator 和 ingress 控制器。
 
-## Deploy demo
-All YAMLs are in the [kubernetes](kubernetes/) folder, please `cd kubernetes/` in advance.
+## 中间件
 
-**First of All**, create a **ProxyProfile** for the demo. A ProxyProfile is a CRD which defines the configuration and routing rules for the [pipy](https://github.com/flomesh-io/pipy) sidecar, please see [proxy-profile.yaml](kubernetes/sidecar/proxy-profile.yaml) for more details.
-```shell
-kubectl apply -f sidecar/proxy-profile.yaml
-```
+Demo 需要用到中间件完成日志和统计数据的存储，这里为了方便使用 pipy 进行 mock：直接在控制台中打印数据。
 
-Check if it's created successfully:
-```shell
-root@k3s:~/flomesh-bookinfo-demo/kubernetes# kubectl get pf
-NAME                         SELECTOR                                                    NAMESPACE   AGE
-proxy-profile-002-bookinfo   {"matchLabels":{"sys":"bookinfo-samples","version":"v1"}}   default     43m
-```
+另外，服务治理相关的配置有 mock 的 pipy config 服务提供。
 
-**Second**, you need to have ClickHouse installed somewhere, and create the log table by [init-log.sql](scripts/init-log.sql) in default schema:
-```SQL
-CREATE TABLE default.log
-(
-	`startTime` Int64 DEFAULT JSONExtractInt(message, 'startTime'),
-	`endTime` Int64 DEFAULT JSONExtractInt(message, 'endTime'),
-	`latency` Int64 DEFAULT JSONExtractInt(message, 'latency'),
-	`status` Int16 DEFAULT JSONExtractInt(response, 'status'),
-	`statusText` String DEFAULT JSONExtractString(response, 'statusText'),
-	`protocol` String DEFAULT JSONExtractString(message, 'protocol'),
-	`method` String DEFAULT JSONExtractString(message, 'method'),
-	`path` String DEFAULT JSONExtractString(message, 'path'),
-	`headers` String DEFAULT JSONExtractRaw(message, 'headers'),
-	`body` String DEFAULT JSONExtractString(message, 'body'),
-	`response` String DEFAULT JSONExtractRaw(message, 'response'),
-	`response.protocol` String DEFAULT JSONExtractString(response, 'protocol'),
-	`message` String
-)
-ENGINE = MergeTree
-PARTITION BY (toYYYYMM(toDateTime(startTime / 1000)))
-ORDER BY (status, startTime)
-SETTINGS index_granularity = 8192;
-```
-
-As the services has startup dependencies, you need to deploy it one by one following the strict order. Before starting, check the **Endpoints** section of **base/clickhouse.yaml**
-
-```yaml
-apiVersion: v1
-kind: Endpoints
-metadata:
-  name: samples-clickhouse
-  labels:
-    app: clickhouse
-    service: clickhouse
-subsets:
-  - addresses:
-    - ip: 172.19.182.213
-    ports:
-    - name: chdb
-      port: 8123
-      protocol: TCP
-```
-
-Change the IP address and port according to your environment, then save and go to deploy:
-```shell
-kubectl apply -f base/discovery-server.yaml
-kubectl apply -f base/clickhouse.yaml
-```
-
-Check the status and log to ensure the discovery server starts successfully and is UP.
-```shell
-root@k3s:~/flomesh-bookinfo-demo/kubernetes# kubectl get po
-NAMESPACE        NAME                                             READY   STATUS              RESTARTS   AGE
-default          samples-discovery-server-v1-56c79689c6-7n7kk     2/2     Running             0          4m14s
-```
-
-Deploy the Config Service:
-```shell
-kubectl apply -f base/config-service.yaml
-```
-
-Check the status and log to ensure the config server starts successfully and is UP.
-```shell
-root@k3s:~/flomesh-bookinfo-demo/kubernetes# kubectl get po
-NAMESPACE        NAME                                             READY   STATUS      RESTARTS   AGE
-default          samples-discovery-server-v1-56c79689c6-7n7kk     2/2     Running     0          4m42s
-default          samples-config-service-v1-65ff699755-2fckg       1/1     Running     0          31s
-```
-
-After that deploy the API gateway, sample services and Ingress.
+### log & metrics
 
 ```shell
-kubectl apply -f base/bookinfo.yaml
-kubectl apply -f ingress/ingress.yaml
+$ cat > middleware.js <<EOF
+pipy()
+.listen(8123)
+    .link('mock')
+
+.listen(9001)
+    .link('mock')
+.pipeline('mock')
+    .decodeHttpRequest()
+    .replaceMessage(
+        req => (
+            console.log(req.body.toString()),
+            new Message('OK')
+        )
+    )
+    .encodeHttpResponse()
+EOF
+
+$ docker run --rm --name middleware --entrypoint "pipy" -v ${PWD}:/script -p 8123:8123 -p 9001:9001 flomesh/pipy-pjs:0.4.0-118 /script/middleware.js
 ```
 
-Check the status of all pods, ensure all are running:
+### pipy config
+
 ```shell
-root@k3s:~/flomesh-bookinfo-demo/kubernetes# kubectl get po
-NAMESPACE        NAME                                               READY   STATUS      RESTARTS   AGE
-default          samples-config-service-v1-65ff699755-8g2gv         1/1     Running     0          2m4s
-default          samples-api-gateway-v1-58674c965f-ph7t8            2/2     Running     0          90s
-default          samples-bookinfo-details-v1-6cd4bd97fc-lzddv       2/2     Running     0          90s
-default          samples-bookinfo-reviews-v1-bb6647cf6-dkf7x        2/2     Running     0          89s
-default          samples-bookinfo-ratings-v1-755f99b955-k59zf       2/2     Running     0          90s
+$ cat > mock-config.json <<EOF
+{
+  "ingress": {},
+  "inbound": {
+    "rateLimit": -1,
+    "dataLimit": -1,
+    "circuitBreak": false,
+    "blacklist": []
+  },
+  "outbound": {
+    "rateLimit": -1,
+    "dataLimit": -1
+  }
+}
+EOF
+
+$ cat > mock.js <<EOF
+pipy({
+  _CONFIG_FILENAME: 'mock-config.json',
+
+  _serveFile: (req, filename, type) => (
+    new Message(
+      {
+        bodiless: req.head.method === 'HEAD',
+        headers: {
+          'etag': os.stat(filename)?.mtime | 0,
+          'content-type': type,
+        },
+      },
+      req.head.method === 'HEAD' ? null : os.readFile(filename),
+    )
+  ),
+
+  _router: new algo.URLRouter({
+    '/config': req => _serveFile(req, _CONFIG_FILENAME, 'application/json'),
+    '/*': () => new Message({ status: 404 }, 'Not found'),
+  }),
+})
+
+// Config
+.listen(9000)
+  .decodeHttpRequest()
+  .replaceMessage(
+    req => (
+      _router.find(req.head.path)(req)
+    )
+  )
+  .encodeHttpResponse()
+EOF
+
+$ docker run --rm --name mock --entrypoint "pipy" -v ${PWD}:/script -p 9000:9000 flomesh/pipy-pjs:0.4.0-118 /script/mock.js
 ```
 
-Take a note of  **EXTERNAL-IP** of `ingress-pipy-controller`, and remember the Ingress Controller listens on port **80** by default, please double check the PORT(S) column for the port number.
+## 运行 Demo
+
+Demo 运行在另一个独立的命名空间 `flomesh-spring` 中，执行命令 `kubectl apply -f base/namespace.yaml` 来创建该命名空间。如果你 `describe` 该命名空间你会发现其使用了 `flomesh.io/inject=true` 标签。
+
+这个标签告知 operator 的 admission webHook 拦截标注的命名空间下 pod 的创建。
+
 ```shell
-root@bookinfo:/vagrant/kubernetes# kubectl get svc -n ingress-pipy
-NAME                          TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
-ingress-pipy-cfg              ClusterIP      10.43.168.156   <none>        6000/TCP       10h
-ingress-pipy-defaultbackend   ClusterIP      10.43.209.193   <none>        80/TCP         10h
-webhook-service               ClusterIP      10.43.146.135   <none>        443/TCP        10h
-ingress-pipy-controller       LoadBalancer   10.43.240.22    10.0.2.15     80:31296/TCP   10h
+$ kubectl describe ns flomesh-spring
+Name:         flomesh-spring
+Labels:       app.kubernetes.io/name=spring-mesh
+              app.kubernetes.io/version=1.19.0
+              flomesh.io/inject=true
+              kubernetes.io/metadata.name=flomesh-spring
+Annotations:  <none>
+Status:       Active
+
+No resource quota.
+
+No LimitRange resource.
 ```
 
-## Test rating service:
+我们首先看下 Flomesh 提供的 CRD `ProxyProfile`。这个 demo 中，其定义了 sidecar 容器片段以及所使用的的脚本。检查 `sidecar/proxy-profile.yaml` 获取更多信息。执行下面的命令，创建 CRD 资源。
 
-create ratings in k8s, replace the ***ingress IP(10.0.2.15)*** with your real Ingress IP address(or valid DNS name):
+```shell
+$ kubectl apply -f sidecar/proxy-profile.yaml
+```
 
-~~~~~bash
-curl -X POST http://10.0.2.15/bookinfo-ratings/ratings \
+检查是否创建成功：
+
+```shell
+$ kubectl get pf -o wide
+NAME                         NAMESPACE        DISABLED   SELECTOR                                     CONFIG                                                                AGE
+proxy-profile-002-bookinfo   flomesh-spring   false      {"matchLabels":{"sys":"bookinfo-samples"}}   {"flomesh-spring":"proxy-profile-002-bookinfo-fsmcm-b67a9e39-0418"}   27s
+```
+
+As the services has startup dependencies, you need to deploy it one by one following the strict order. Before starting, check the **Endpoints** section of **base/clickhouse.yaml**.
+
+提供中间件的访问 endpoid，将 `base/clickhouse.yaml`、`base/metrics.yaml` 和 `base/config.yaml` 中的 ip 地址改为本机的 ip 地址（不是 127.0.0.1）。
+
+修改之后，执行如下命令：
+
+```shell
+$ kubectl apply -f base/clickhouse.yaml
+$ kubectl apply -f base/metrics.yaml
+$ kubectl apply -f base/config.yaml
+
+$ kubectl get endpoints samples-clickhouse samples-metrics samples-config
+NAME                 ENDPOINTS            AGE
+samples-clickhouse   192.168.1.101:8123   3m
+samples-metrics      192.168.1.101:9001   3s
+samples-config       192.168.1.101:9000   3m
+```
+
+### 部署注册中心
+
+```shell
+$ kubectl apply -f base/discovery-server.yaml
+```
+
+检查注册中心 pod 的状态，确保 3 个容器都运行正常。
+
+```shell
+$ kubectl get pod
+NAME                                           READY   STATUS        RESTARTS   AGE
+samples-discovery-server-v1-85798c47d4-dr72k   3/3     Running       0          96s
+```
+
+### 部署配置中心
+
+```shell
+$ kubectl apply -f base/config-service.yaml
+```
+
+### 部署 API 网关以及 bookinfo 相关的服务
+
+```shell
+$ kubectl apply -f base/bookinfo-v1.yaml
+$ kubectl apply -f base/bookinfo-v2.yaml
+$ kubectl apply -f base/productpage-v1.yaml
+$ kubectl apply -f base/productpage-v2.yaml
+```
+
+检查 pod 状态，可以看到所有 pod 都注入了容器。
+
+```shell
+$ kubectl get pods
+samples-discovery-server-v1-85798c47d4-p6zpb       3/3     Running   0          19h
+samples-config-service-v1-84888bfb5b-8bcw9         1/1     Running   0          19h
+samples-api-gateway-v1-75bb6456d6-nt2nl            3/3     Running   0          6h43m
+samples-bookinfo-ratings-v1-6d557dd894-cbrv7       3/3     Running   0          6h43m
+samples-bookinfo-details-v1-756bb89448-dxk66       3/3     Running   0          6h43m
+samples-bookinfo-reviews-v1-7778cdb45b-pbknp       3/3     Running   0          6h43m
+samples-api-gateway-v2-7ddb5d7fd9-8jgms            3/3     Running   0          6h37m
+samples-bookinfo-ratings-v2-845d95fb7-txcxs        3/3     Running   0          6h37m
+samples-bookinfo-reviews-v2-79b4c67b77-ddkm2       3/3     Running   0          6h37m
+samples-bookinfo-details-v2-7dfb4d7c-jfq4j         3/3     Running   0          6h37m
+samples-bookinfo-productpage-v1-854675b56-8n2xd    1/1     Running   0          7m1s
+samples-bookinfo-productpage-v2-669bd8d9c7-8wxsf   1/1     Running   0          6m57s
+```
+
+### 添加 Ingress 规则
+
+执行如下命令添加 Ingress 规则。
+
+```shell
+$ kubectl apply -f ingress/ingress.yaml
+```
+
+### 测试前的准备
+
+访问 demo 服务都要通过 ingress 控制器。因此需要先获取 LB 的 ip 地址。
+
+```shell
+//Obtain the controller IP
+//Here, we append port. 
+ingressAddr=`kubectl get svc ingress-pipy-controller -n ingress-pipy -o jsonpath='{.spec.clusterIP}'`:81
+```
+
+这里我们使用了是 k3d 创建的 k3s，命令中加入了 `-p 81:80@loadbalancer` 选项。我们可以使用 `127.0.0.1:81` 来访问 ingress 控制器。这里执行命令 `ingressAddr=127.0.0.1:81`。
+
+Ingress 规则中，我们为每个规则指定了 `host`，因此每个请求中需要通过 HTTP 请求头 `Host` 提供对应的 `host`。
+
+或者在 `/etc/hosts` 添加记录：
+
+```shell
+$ kubectl get ing ingress-pipy-bookinfo -n flomesh-spring -o jsonpath="{range .spec.rules[*]}{.host}{'\n'}"
+api-v1.flomesh.cn
+api-v2.flomesh.cn
+fe-v1.flomesh.cn
+fe-v2.flomesh.cn
+
+//添加记录到 /etc/hosts
+127.0.0.1 api-v1.flomesh.cn api-v2.flomesh.cn fe-v1.flomesh.cn fe-v2.flomesh.cn
+```
+
+#### 验证
+
+```shell
+$ curl http://127.0.0.1:81/actuator/health -H 'Host: api-v1.flomesh.cn'
+{"status":"UP","groups":["liveness","readiness"]}
+//OR
+$ curl http://api-v1.flomesh.cn:81/actuator/health
+{"status":"UP","groups":["liveness","readiness"]}
+```
+
+## 测试
+
+### 灰度
+
+在 v1 版本的服务中，我们为 book 添加 rating 和 review。
+
+```shell
+# rate a book
+$ curl -X POST http://$ingressAddr/bookinfo-ratings/ratings \
 	-H "Content-Type: application/json" \
-	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","rating":3}' 
-~~~~~
+	-H "Host: api-v1.flomesh.cn" \
+	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"2099a055-1e21-46ef-825e-9e0de93554ea","rating":3}' 
 
-query ratings by product_id in kubernetes, replace the ***ingress IP(10.0.2.15)*** with your real Ingress IP address(or valid DNS name):
+$ curl http://$ingressAddr/bookinfo-ratings/ratings/2099a055-1e21-46ef-825e-9e0de93554ea -H "Host: api-v1.flomesh.cn"
 
-~~~~~bash
-curl http://10.0.2.15/bookinfo-ratings/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
-~~~~~
-
-## Test review service:
-
-create review in k8s, replace the ***ingress IP(10.0.2.15)*** with your real Ingress IP address(or valid DNS name):
-
-~~~~~bash
-curl -X POST http://10.0.2.15/bookinfo-reviews/reviews \
+# review a book
+$ curl -X POST http://$ingressAddr/bookinfo-reviews/reviews \
 	-H "Content-Type: application/json" \
-	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","review":"This was OK.","rating":3}'
-~~~~~
+	-H "Host: api-v1.flomesh.cn" \
+	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"2099a055-1e21-46ef-825e-9e0de93554ea","review":"This was OK.","rating":3}'
 
-query review by product_id in k8s, replace the ***ingress IP(10.0.2.15)*** with your real Ingress IP address(or valid DNS name):
-
-~~~~~bash
-curl http://10.0.2.15/bookinfo-reviews/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
-~~~~~
-
-## Test detail service
-
- query detail by isbn in k8s, replace the ***ingress IP(10.0.2.15)*** with your real Ingress IP address(or valid DNS name):
-
-~~~~~bash
-curl http://10.0.2.15/bookinfo-details/details/1234567890
-~~~~~
-
-
-
-# Run locally:
-
-## Start Eureka service:
-In the project root folder:
-```shell
-cd discovery-server
-mvn spring-boot:run
+$ curl http://$ingressAddr/bookinfo-reviews/reviews/2099a055-1e21-46ef-825e-9e0de93554ea -H "Host: api-v1.flomesh.cn"
 ```
 
-## Start Config service:
-In the project root folder:
-```shell
-cd config-service
-mvn spring-boot:run
+执行上面的命令之后，我们可以在浏览器中访问前端服务（`http://fe-v1.flomesh.cn:81/productpage?u=normal`、 `http://fe-v2.flomesh.cn:81/productpage?u=normal`），只有 v1 版本的前端中才能看到刚才添加的记录。
+
+![page v1](./docs/images/demo/page-v1.png)
+
+![page v2](./docs/images/demo/page-v2.png)
+
+### 熔断
+
+这里熔断我们通过修改 `mock-config.json` 中的 `inbound.circuitBreak` 为 `true`，来将服务强制开启熔断：
+
+```json
+{
+  "ingress": {},
+  "inbound": {
+    "rateLimit": -1,
+    "dataLimit": -1,
+    "circuitBreak": true, //here
+    "blacklist": []
+  },
+  "outbound": {
+    "rateLimit": -1,
+    "dataLimit": -1
+    
+  }
+}
 ```
 
-## Start API Gateway:
-In the project root folder:
 ```shell
-cd api-gateway
-mvn spring-boot:run -Dspring.profiles.active=local
+$ curl http://$ingressAddr/actuator/health -H 'Host: api-v1.flomesh.cn'
+HTTP/1.1 503 Service Unavailable
+Connection: keep-alive
+Content-Length: 27
+
+Service Circuit Break Open
 ```
 
-## Start rating service: 
-In the project root folder:
-~~~~~bash
-cd ratings
-mvn spring-boot:run
-~~~~~
-In VM environment, it will listen on localhost:8101. 
+### 限流
 
-create rating in VM, visit the service directly:
-~~~~~bash
-curl -X POST http://localhost:8101/ratings \
-	-H "Content-Type: application/json" \
-	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","rating":3}' 
-~~~~~
+修改 pipy config 的配置，将 `inbound.rateLimit` 设置为 1。
 
-Through API Gateway:
-~~~~~bash
-curl -X POST http://localhost:10000/bookinfo-ratings/ratings \
-	-H "Content-Type: application/json" \
-	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","rating":3}' 
-~~~~~
-
-query ratings by product_id in vm:
-~~~~~bash
-curl http://localhost:8101/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
-~~~~~
-
-Through API Gateway:
-~~~~~bash
-curl http://localhost:10000/bookinfo-ratings/ratings/a071c269-369c-4f79-be03-6a41f27d6b5f
-~~~~~
-
-## Start review service:
-In the project root folder:
-~~~~~bash
-cd reviews
-mvn spring-boot:run
-~~~~~
-It will listen on localhost:8102 and will call localhost:8101 for rating query in vm environment.
-
-
-create review in VM:
-~~~~~bash
-curl -X POST http://localhost:8102/reviews \
-	-H "Content-Type: application/json" \
-	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","review":"This was OK.","rating":3}' 
-~~~~~
-
-Through API Gateway:
-~~~~~bash	
-curl -X POST http://localhost:10000/bookinfo-reviews/reviews \
-	-H "Content-Type: application/json" \
-	-d '{"reviewerId":"9bc908be-0717-4eab-bb51-ea14f669ef20","productId":"a071c269-369c-4f79-be03-6a41f27d6b5f","review":"This was OK.","rating":3}'
-~~~~~
-
-query review by product_id in VM:
-~~~~~bash
-curl http://localhost:8102/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
-~~~~~
-
-Through API Gateway:
-~~~~~bash
-curl http://localhost:10000/bookinfo-reviews/reviews/a071c269-369c-4f79-be03-6a41f27d6b5f
-~~~~~
-
-## Start detail service:
-
-In the project root folder:
-~~~~~bash
-cd details
-mvn spring-boot:run
-~~~~~
-It will listen on localhost:8103
-
-query detail by isbn:
-~~~~~bash
-curl http://localhost:8103/details/1234567890
-~~~~~
-
-Through API Gateway:
-~~~~~bash
-curl http://localhost:10000/bookinfo-details/details/1234567890
-~~~~~
-
-## Start Product Page
-```shell
-cd productpage
-npm start
+```json
+{
+  "ingress": {},
+  "inbound": {
+    "rateLimit": 1, //here
+    "dataLimit": -1,
+    "circuitBreak": false,
+    "blacklist": []
+  },
+  "outbound": {
+    "rateLimit": -1,
+    "dataLimit": -1
+  }
+}
 ```
 
-Open a Web Browser, and navigate to `http://localhost:9080`
+我们使用 `wrk` 模拟发送请求，20 个连接、20 个请求、持续 30s：
+
+```shell
+$ wrk -t20 -c20 -d30s --latency http://$ingressAddr/actuator/health -H 'Host: api-v1.flomesh.cn'
+Running 30s test @ http://127.0.0.1:81/actuator/health
+  20 threads and 20 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   951.51ms  206.23ms   1.04s    93.55%
+    Req/Sec     0.61      1.71    10.00     93.55%
+  Latency Distribution
+     50%    1.00s
+     75%    1.01s
+     90%    1.02s
+     99%    1.03s
+  620 requests in 30.10s, 141.07KB read
+Requests/sec:     20.60
+Transfer/sec:      4.69KB
+```
+
+从结果来看 20.60 req/s，即每个连接 1 req/s。
+
+### 黑白名单
+
+将 pipy config 的 `mock-config.json` 做如下修改：ip 地址使用的是 ingress controller 的 pod ip。
+
+```shell
+$ kgpo -n ingress-pipy ingress-pipy-controller-76cd866d78-4cqqn -o jsonpath='{.status.podIP}'
+10.42.0.78
+```
+
+```json
+{
+  "ingress": {},
+  "inbound": {
+    "rateLimit": -1,
+    "dataLimit": -1,
+    "circuitBreak": false,
+    "blacklist": ["10.42.0.78"] //here
+  },
+  "outbound": {
+    "rateLimit": -1,
+    "dataLimit": -1
+    
+  }
+}
+```
+
+还是访问网关的接口
+
+```shell
+curl http://$ingressAddr/actuator/health -H 'Host: api-v1.flomesh.cn'
+HTTP/1.1 503 Service Unavailable
+content-type: text/plain
+Connection: keep-alive
+Content-Length: 20
+
+Service Unavailable
+```

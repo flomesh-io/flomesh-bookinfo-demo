@@ -44,7 +44,6 @@ router.get('/productpage', async (req, res, next) => {
     const [details, reviews] = await Promise.all(
       [getDetails(product.id), getReviews(product.id)],
     );
-
     return res.render('productpage', { product, details, reviews });
   } catch (err) {
     return next(err);

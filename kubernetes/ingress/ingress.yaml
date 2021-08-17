@@ -13,15 +13,47 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress-pipy-bookinfo
+  namespace: flomesh-spring
 spec:
   ingressClassName: pipy
   rules:
-    - http:
+    - host: "api-v1.flomesh.cn"
+      http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: samples-api-gateway
+                name: samples-api-gateway-v1
                 port:
                   number: 10010
+    - host: "api-v2.flomesh.cn"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: samples-api-gateway-v2
+                port:
+                  number: 10010
+    - host: "fe-v1.flomesh.cn"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: samples-bookinfo-productpage-v1
+                port:
+                  number: 9080
+    - host: "fe-v2.flomesh.cn"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: samples-bookinfo-productpage-v2
+                port:
+                  number: 9080

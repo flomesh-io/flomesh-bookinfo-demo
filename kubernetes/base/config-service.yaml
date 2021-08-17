@@ -5,6 +5,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: samples-config-service
+  namespace: flomesh-spring
   labels:
     app: config
     service: samples-config-service
@@ -20,6 +21,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: samples-config-service-v1
+  namespace: flomesh-spring
   labels:
     app: config
     version: v1
