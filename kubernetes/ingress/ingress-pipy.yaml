@@ -694,7 +694,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
-          image: flomesh/pipy-pjs:latest
+          image: flomesh/pipy-pjs:0.4.0-118
           imagePullPolicy: Always
           name: ingress
           ports:
