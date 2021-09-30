@@ -291,7 +291,7 @@ $ kubectl apply -f base/clickhouse.yaml
 $ kubectl apply -f base/metrics.yaml
 $ kubectl apply -f base/config.yaml
 
-$ kubectl get endpoints samples-clickhouse samples-metrics samples-config
+$ kubectl get endpoints samples-clickhouse samples-metrics samples-config -n flomesh-spring
 NAME                 ENDPOINTS            AGE
 samples-clickhouse   192.168.1.101:8123   3m
 samples-metrics      192.168.1.101:9001   3s
