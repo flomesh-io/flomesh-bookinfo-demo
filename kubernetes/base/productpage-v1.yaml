@@ -65,37 +65,37 @@ spec:
               value: samples-api-gateway-v1
             - name: K8S_SAMPLES_API_GATEWAY_PORT
               value: "10010"
-            - name: _pod_ns
+            - name: _samples_pod_ns
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-            - name: _pod_nodeName
+            - name: _samples_pod_nodeName
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-            - name: _pod_name
+            - name: _samples_pod_name
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: _pod_serviceName
+            - name: _samples_pod_serviceName
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.labels['service']
-            - name: _pod_serviceVersion
+            - name: _samples_pod_serviceVersion
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.labels['version']
-            - name: _pod_serviceFullName
-              value: $(_pod_serviceName)-$(_pod_serviceVersion)
-            - name: _pod_UID
+            - name: _samples_pod_serviceFullName
+              value: $(_samples_pod_serviceName)-$(_samples_pod_serviceVersion)
+            - name: _samples_pod_UID
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.uid
-            - name: _pod_IP
+            - name: _samples_pod_IP
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            - name: _pod_hostIP
+            - name: _samples_pod_hostIP
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
