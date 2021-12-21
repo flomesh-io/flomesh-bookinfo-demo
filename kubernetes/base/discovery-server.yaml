@@ -57,6 +57,40 @@ spec:
               value: samples-discovery-server
             - name: K8S_SERVICE_NAME
               value: samples-discovery-server
+            - name: _pod_ns
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: _pod_nodeName
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: _pod_name
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: _pod_serviceName
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['service']
+            - name: _pod_serviceVersion
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['version']
+            - name: _pod_serviceFullName
+              value: $(_pod_serviceName)-$(_pod_serviceVersion)
+            - name: _pod_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            - name: _pod_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: _pod_hostIP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
           resources:
             limits:
               memory: 300Mi
