@@ -22,6 +22,9 @@ public class HeaderPropagatingInterceptor implements RequestInterceptor {
         Enumeration<String> names = request.getHeaderNames();
         while (names.hasMoreElements()) {
             String name = names.nextElement();
+            if("content-length".equalsIgnoreCase(name)) {
+                continue;
+            }
             String value = request.getHeader(name);
             if (null != value) {
                 template.header(name, value);
