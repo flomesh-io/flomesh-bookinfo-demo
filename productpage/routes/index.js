@@ -6,11 +6,11 @@ const { services } = require('../config');
 const router = express.Router();
 const { products } = require('../data');
 
-async function getDetails(productId) {
+async function getDetails(productId, headers) {
   try {
     const url = `${services.details.name}/${services.details.endpoint}/${productId}`;
     console.log(`Calling ${url}`);
-    const response = await axios.get(url);
+    const response = await axios.get(url, {headers: headers});
     if (response.error) console.error(response.error);
     return response.data;
   } catch (err) {
@@ -19,11 +19,11 @@ async function getDetails(productId) {
   }
 }
 
-async function getReviews(productId) {
+async function getReviews(productId, headers) {
   try {
     const url = `${services.reviews.name}/${services.reviews.endpoint}/${productId}`;
     console.log(`Calling ${url}`);
-    const response = await axios.get(url);
+    const response = await axios.get(url, {headers: headers});
     console.log(response);
     if (response.error) console.error(response.error);
     return response.data;
@@ -42,7 +42,7 @@ router.get('/productpage', async (req, res, next) => {
   try {
     const product = products[0];
     const [details, reviews] = await Promise.all(
-      [getDetails(product.id), getReviews(product.id)],
+      [getDetails(product.id, req.headers), getReviews(product.id, req.headers)],
     );
     return res.render('productpage', { product, details, reviews });
   } catch (err) {
