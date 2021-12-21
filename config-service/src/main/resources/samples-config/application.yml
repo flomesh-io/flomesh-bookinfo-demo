@@ -17,7 +17,7 @@ spring:
   jmx:
     enabled: false
   sleuth:
-    enabled: true
+    enabled: false
     sampler:
       percentage: 1.0
     log:
