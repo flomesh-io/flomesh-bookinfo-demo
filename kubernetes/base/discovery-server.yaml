@@ -93,6 +93,6 @@ spec:
                   fieldPath: status.hostIP
           resources:
             limits:
-              memory: 300Mi
+              memory: 600Mi
             requests:
               memory: 300Mi

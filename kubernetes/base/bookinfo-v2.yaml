@@ -133,7 +133,7 @@ spec:
                   fieldPath: status.hostIP
           resources:
             limits:
-              memory: 300Mi
+              memory: 600Mi
             requests:
               memory: 300Mi
           livenessProbe:
@@ -258,7 +258,7 @@ spec:
                 fieldPath: status.hostIP
         resources:
           limits:
-            memory: 300Mi
+            memory: 600Mi
           requests:
             memory: 300Mi
         livenessProbe:
@@ -384,7 +384,7 @@ spec:
           limits:
             memory: 600Mi
           requests:
-            memory: 600Mi
+            memory: 300Mi
         livenessProbe:
           httpGet:
             path: /actuator/health
@@ -512,7 +512,7 @@ spec:
           limits:
             memory: 600Mi
           requests:
-            memory: 600Mi
+            memory: 300Mi
         livenessProbe:
           httpGet:
             path: /actuator/health
