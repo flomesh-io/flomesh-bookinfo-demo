@@ -8,6 +8,8 @@ spring:
         enabled: true
         service-id: config-service
 
+ratings-enabled: false
+
 eureka:
   instance:
     prefer-ip-address: true

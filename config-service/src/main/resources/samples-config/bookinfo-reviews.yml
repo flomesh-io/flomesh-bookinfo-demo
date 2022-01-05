@@ -1,8 +1,6 @@
 bookinfo-ratings:
   url: http://${K8S_SAMPLES_BOOKINFO_RATINGS_HOSTNAME:localhost}:8101
 
-ratings-enabled: false
-
 server:
   port: 8102
 
