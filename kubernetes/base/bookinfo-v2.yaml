@@ -76,7 +76,7 @@ spec:
     spec:
       initContainers:
         - name: check-config
-          image: busybox:latest
+          image: docker.io/flomesh/busybox:loong64
           command: [ "/bin/sh", "-c" ]
           args:
             - |-
@@ -86,7 +86,7 @@ spec:
               done;
       containers:
         - name: app
-          image: docker.io/flomesh/samples-api-gateway:latest
+          image: docker.io/flomesh/samples-api-gateway:loong64
           imagePullPolicy: Always
           ports:
             - containerPort: 10000
@@ -201,7 +201,7 @@ spec:
     spec:
       initContainers:
         - name: check-config
-          image: busybox:latest
+          image: docker.io/flomesh/busybox:loong64
           command: [ "/bin/sh", "-c" ]
           args:
             - |-
@@ -211,7 +211,7 @@ spec:
               done;
       containers:
       - name: app
-        image: docker.io/flomesh/samples-bookinfo-details:latest
+        image: docker.io/flomesh/samples-bookinfo-details:loong64
         imagePullPolicy: Always
         ports:
         - containerPort: 8103
@@ -325,7 +325,7 @@ spec:
     spec:
       initContainers:
         - name: check-config
-          image: busybox:latest
+          image: docker.io/flomesh/busybox:loong64
           command: [ "/bin/sh", "-c" ]
           args:
             - |-
@@ -335,7 +335,7 @@ spec:
               done;
       containers:
       - name: app
-        image: docker.io/flomesh/samples-bookinfo-ratings:latest
+        image: docker.io/flomesh/samples-bookinfo-ratings:loong64
         imagePullPolicy: Always
         ports:
         - containerPort: 8101
@@ -449,7 +449,7 @@ spec:
     spec:
       initContainers:
         - name: check-config
-          image: busybox:latest
+          image: docker.io/flomesh/busybox:loong64
           command: [ "/bin/sh", "-c" ]
           args:
             - |-
@@ -459,7 +459,7 @@ spec:
               done;
       containers:
       - name: app
-        image: docker.io/flomesh/samples-bookinfo-reviews:latest
+        image: docker.io/flomesh/samples-bookinfo-reviews:loong64
         imagePullPolicy: Always
         ports:
         - containerPort: 8102

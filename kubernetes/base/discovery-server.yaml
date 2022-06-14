@@ -48,7 +48,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: docker.io/flomesh/samples-discovery-server:latest
+          image: docker.io/flomesh/samples-discovery-server:loong64
           imagePullPolicy: Always
           ports:
             - containerPort: 8761

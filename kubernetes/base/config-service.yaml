@@ -42,7 +42,7 @@ spec:
     spec:
       initContainers:
         - name: check-discovery
-          image: busybox:latest
+          image: docker.io/flomesh/busybox:loong64
           command: ["/bin/sh", "-c"]
           args:
             - |-
@@ -52,7 +52,7 @@ spec:
               done;
       containers:
         - name: app
-          image: docker.io/flomesh/samples-config-service:latest
+          image: docker.io/flomesh/samples-config-service:loong64
           imagePullPolicy: Always
           ports:
             - containerPort: 8888

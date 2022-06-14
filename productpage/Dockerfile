@@ -1,4 +1,4 @@
-FROM node:14-alpine3.13
+FROM harbor.loongnix.cn/mirrorloongsoncontainers/nodejs/node:v14.16.1
 # Create app directory
 WORKDIR /usr/src/app
 # Install app dependencies

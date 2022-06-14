@@ -48,7 +48,7 @@ spec:
     spec:
       initContainers:
         - name: check-config
-          image: busybox:latest
+          image: docker.io/flomesh/busybox:loong64
           command: [ "/bin/sh", "-c" ]
           args:
             - |-
@@ -99,7 +99,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
-          image: flomesh/samples-bookinfo-productpage:latest
+          image: flomesh/samples-bookinfo-productpage:loong64
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9080
