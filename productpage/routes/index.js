@@ -10,6 +10,7 @@ async function getDetails(productId, headers) {
   try {
     const url = `${services.details.name}/${services.details.endpoint}/${productId}`;
     console.log(`Calling ${url}`);
+    delete headers.host
     const response = await axios.get(url, {headers: headers});
     if (response.error) console.error(response.error);
     return response.data;
@@ -23,6 +24,7 @@ async function getReviews(productId, headers) {
   try {
     const url = `${services.reviews.name}/${services.reviews.endpoint}/${productId}`;
     console.log(`Calling ${url}`);
+    delete headers.host
     const response = await axios.get(url, {headers: headers});
     console.log(response);
     if (response.error) console.error(response.error);
