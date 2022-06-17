@@ -175,15 +175,16 @@ pipy()
 
 .listen(9001)
     .link('mock')
+
 .pipeline('mock')
-    .decodeHttpRequest()
+    .decodeHTTPRequest()
     .replaceMessage(
         req => (
             console.log(req.body.toString()),
             new Message('OK')
         )
     )
-    .encodeHttpResponse()
+    .encodeHTTPResponse()
 EOF
 
 $ docker run --rm --name middleware --entrypoint "pipy" -v ${PWD}:/script -p 8123:8123 -p 9001:9001 flomesh/pipy-pjs:0.4.0-118 /script/middleware.js
@@ -233,13 +234,13 @@ pipy({
 
 // Config
 .listen(9000)
-  .decodeHttpRequest()
+  .decodeHTTPRequest()
   .replaceMessage(
     req => (
       _router.find(req.head.path)(req)
     )
   )
-  .encodeHttpResponse()
+  .encodeHTTPResponse()
 EOF
 
 $ docker run --rm --name mock --entrypoint "pipy" -v ${PWD}:/script -p 9000:9000 flomesh/pipy-pjs:0.4.0-118 /script/mock.js
