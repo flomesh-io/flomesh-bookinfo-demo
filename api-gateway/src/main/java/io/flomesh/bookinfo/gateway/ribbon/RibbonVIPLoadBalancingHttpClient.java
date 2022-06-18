@@ -7,8 +7,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.springframework.cloud.netflix.ribbon.ServerIntrospector;
 import org.springframework.cloud.netflix.ribbon.apache.RibbonLoadBalancingHttpClient;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.net.URI;
 
 public class RibbonVIPLoadBalancingHttpClient extends RibbonLoadBalancingHttpClient {
@@ -20,7 +18,7 @@ public class RibbonVIPLoadBalancingHttpClient extends RibbonLoadBalancingHttpCli
     }
 
     @Override
-    public Server getServerFromLoadBalancer(@Nullable URI original, @Nullable Object loadBalancerKey) throws ClientException {
+    public Server getServerFromLoadBalancer(URI original, Object loadBalancerKey) throws ClientException {
         Server server = super.getServerFromLoadBalancer(original, loadBalancerKey);
         if (preferVIPAddress)
             server.setHost(server.getMetaInfo().getServiceIdForDiscovery());
