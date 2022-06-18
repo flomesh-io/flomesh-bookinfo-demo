@@ -1,4 +1,4 @@
-package io.flomesh.bookinfo.common;
+package io.flomesh.bookinfo.common.feign.interceptor;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
