@@ -39,6 +39,7 @@ spec:
         service: samples-config-service
       annotations:
         service.flomesh.io/name: "samples-config-service"
+        flomesh.io/inject: "false"
     spec:
       initContainers:
         - name: check-discovery

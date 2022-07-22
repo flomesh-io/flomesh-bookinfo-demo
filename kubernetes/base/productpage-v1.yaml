@@ -42,7 +42,7 @@ spec:
         app: productpage
         version: v1
         service: samples-bookinfo-productpage
-#        sys: bookinfo-samples
+        sys: bookinfo-samples
       annotations:
         "flomesh.io/inject": "true"
     spec:
