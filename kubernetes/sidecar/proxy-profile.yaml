@@ -3,6 +3,7 @@ kind: ProxyProfile
 metadata:
   name: proxy-profile-002-bookinfo
 spec:
+  mode: Local
   selector:
     matchLabels:
       sys: bookinfo-samples
@@ -106,7 +107,7 @@ spec:
         .handleSessionEnd(
           () => _connectionPool.freeTenant(__inbound.id)
         )
-        .decodeHttpRequest()
+        .decodeHTTPRequest()
         .tap(
           () => (_g.configOutbound?.dataLimit || -1) + 'k'
         )
@@ -116,12 +117,12 @@ spec:
             )
         )
         .demux('outbound-message')
-        .encodeHttpResponse()
+        .encodeHTTPResponse()
 
       .pipeline('outbound-message')
         .handleMessageStart(
           msg => (
-            _context = msg.context,
+            _context = {}, //msg.context,
             _context.id = ++_g.autoRequestID
           )
         )
@@ -153,7 +154,7 @@ spec:
         .handleSessionEnd(
           () => _connectionPool.freeTenant(__inbound.id)
         )
-        .decodeHttpRequest()
+        .decodeHTTPRequest()
         .tap(
           () => (
             console.log('ratelimit: ' + _g.configInbound?.rateLimit),
@@ -164,12 +165,12 @@ spec:
           () => (_g.configInbound?.rateLimit || -1)
         )
         .demux('inbound-message')
-        .encodeHttpResponse()
+        .encodeHTTPResponse()
 
       .pipeline('inbound-message')
         .handleMessageStart(
           msg => (
-            _context = msg.context,
+            _context = {}, //msg.context,
             _context.id = ++_g.autoRequestID
           )
         )
@@ -212,7 +213,7 @@ spec:
             'Service Circuit Break Open\n'
           )
         )
-        .encodeHttpResponse()
+        .encodeHTTPResponse()
 
       .pipeline('deny-http')
         .replaceMessage(
@@ -226,7 +227,7 @@ spec:
             'Service Unavailable\n'
           )
         )
-        .encodeHttpResponse()
+        .encodeHTTPResponse()
 
         //
       // Inbound & Outbound pass to upstream
@@ -239,11 +240,11 @@ spec:
         )
 
       .pipeline('connection')
-        .encodeHttpRequest()
+        .encodeHTTPRequest()
         .connect(
           () => _context.target
         )
-        .decodeHttpResponse()
+        .decodeHTTPResponse()
 
       .pipeline('404')
         .replaceMessage(
@@ -263,9 +264,9 @@ spec:
       //
 
       .listen(os.env.PIPY_LISTEN_EUREKA || 8771)
-        .decodeHttpRequest()
+        .decodeHTTPRequest()
         .use('eureka.js', 'query')
-        .encodeHttpResponse()
+        .encodeHTTPResponse()
 
       //
       // Logging
@@ -329,7 +330,7 @@ spec:
         .merge('send-log-connection')
 
       .pipeline('send-log-connection')
-        .encodeHttpRequest()
+        .encodeHTTPRequest()
         .connect(
           () => _LOGGER_URL.host
         )
@@ -753,7 +754,7 @@ spec:
 
       // Request/response input
       .listen(os.env.PIPY_LOGGER_LISTEN || 9090)
-        .decodeHttpRequest()
+        .decodeHTTPRequest()
         .onMessageStart(
           msg => _contentEncoding = msg.head.headers['content-encoding']
         )
@@ -767,7 +768,7 @@ spec:
         .merge('batch')
 
       .pipeline('decompress')
-        .decompressMessageBody('inflate')
+        .decompressMessage('inflate')
 
       // Accumulate log messages into batches
       .pipeline('batch')
@@ -788,7 +789,7 @@ spec:
             }
           })
         )
-        .encodeHttpRequest()
+        .encodeHTTPRequest()
         .connect(
           () => _LOG_SINK_URL.host,
           {
@@ -855,11 +856,11 @@ spec:
         )
 
       .pipeline('send-metrics')
-        .encodeHttpRequest()
+        .encodeHTTPRequest()
         .connect(
           () => _METRICS_SINK_URL.host
         )
-        .decodeHttpResponse()
+        .decodeHTTPResponse()
 
       .pipeline('bypass')
     eureka.js: |+
@@ -924,9 +925,9 @@ spec:
             _queue.push(msg)
           )
         )
-        .encodeHttpRequest()
+        .encodeHTTPRequest()
         .connect(os.env.PIPY_TARGET_EUREKA || '127.0.0.1:8761')
-        .decodeHttpResponse({ decompress: true })
+        .decodeHTTPResponse({ decompress: true })
         .replaceMessage(
           (
             msg,
@@ -945,72 +946,76 @@ spec:
             (reqHead?.path == '/eureka/apps/' || reqHead?.path == '/eureka/apps' || reqHead?.path.startsWith('/eureka/apps/?') || reqHead?.path == '/eureka/apps/delta') && reqHead?.headers?.accept?.startsWith('application/json') && reqHead?.method == 'GET' ? (
               body = msg.body,
               data = JSON.decode(body),
-              data?.applications?.application?.forEach(
+              data?.applications?.application?.forEach?.(
                 //application
                 a => (
-                  targets = null,
-                  loopback = null,
                   name = a.name.toLowerCase(), // application name
-                  loopback = _mapping[name],
-                  loopback || (
-                    loopback = _range.next(),
-                    _mapping[name] = loopback
-                  ),
-                  console.log(`processing service: ${name}`),
-                  //excluding instaince with sidecar injected but diffect version
-                  //those instances are not in same version scope
-                  a.instance = a.instance?.filter(
-                    i => i.metadata?.version == undefined || i.metadata?.version == _TARGET_VERSION
-                  ),
+                  name == 'config-service' ? (
+                    console.log('ignore config-service...')
+                  ) : (
+                    targets = null,
+                    loopback = null,
+                    loopback = _mapping[name],
+                    loopback || (
+                      loopback = _range.next(),
+                      _mapping[name] = loopback
+                    ),
+                    console.log(`processing service: ${name}`),
+                    //excluding instaince with sidecar injected but diffect version
+                    //those instances are not in same version scope
+                    a.instance = a.instance?.filter(
+                      i => i.metadata?.version == undefined || i.metadata?.version == _TARGET_VERSION
+                    ),
 
-                  targets = a.instance?.map?.(
-                    ins => ((i, addr, deleted) => (
-                      //port offset for sidecar inject intance only
-                      addr = i.metadata?.mesh == 'true' ? `${i.ipAddr}:${+i.port.$ + _SERVICE_PORT_OFFSET}` : `${i.ipAddr}:${i.port.$}`,
-                      //mark instance action
-                      deleted = i.actionType == 'DELETED',
-                      { addr, deleted }
-                    ))(ins, '', '')
-                  ),
-                  /*_deltaVersion != data.applications['versions__delta']*/true && (
-                    //cache delta version
-                    _deltaVersion = data.applications['versions__delta'],
-                    //update service targets
-                    ((deleted, added) => (
-                      deleted = targets.filter(t => t.deleted),
-                      added = targets.filter(t => !t.deleted),
-                      //init if not exist
-                      _services[loopback] || (_services[loopback] = { "name": name, "targets": [] }),
-                      //remove DELETE instances
-                      _services[loopback].targets = _services[loopback]?.targets.filter(
-                        t => !deleted.find(d => d.addr == t)
-                      ),
-                      //add ADDED instances
-                      added.forEach(
-                        a => (
-                          !_services[loopback].targets.find(exist => exist == a.addr) && (
-                            _services[loopback]?.targets.push(a.addr,)
+                    targets = a.instance?.map?.(
+                      ins => ((i, addr, deleted) => (
+                        //port offset for sidecar inject intance only
+                        addr = i.metadata?.mesh == 'true' ? `${i.ipAddr}:${+i.port.$ + _SERVICE_PORT_OFFSET}` : `${i.ipAddr}:${i.port.$}`,
+                        //mark instance action
+                        deleted = i.actionType == 'DELETED',
+                        { addr, deleted }
+                      ))(ins, '', '')
+                    ),
+                    /*_deltaVersion != data.applications['versions__delta']*/true && (
+                      //cache delta version
+                      _deltaVersion = data.applications['versions__delta'],
+                      //update service targets
+                      ((deleted, added) => (
+                        deleted = targets.filter(t => t.deleted),
+                        added = targets.filter(t => !t.deleted),
+                        //init if not exist
+                        _services[loopback] || (_services[loopback] = { "name": name, "targets": [] }),
+                        //remove DELETE instances
+                        _services[loopback].targets = _services[loopback]?.targets.filter(
+                          t => !deleted.find(d => d.addr == t)
+                        ),
+                        //add ADDED instances
+                        added.forEach(
+                          a => (
+                            !_services[loopback].targets.find(exist => exist == a.addr) && (
+                              _services[loopback]?.targets.push(a.addr,)
+                            )
                           )
                         )
-                      )
-                    ))([], []),
-                    //update service balancer
-                    _balancers[loopback] = new algo.RoundRobinLoadBalancer(_services[loopback].targets)
-                  ),
+                      ))([], []),
+                      //update service balancer
+                      _balancers[loopback] = new algo.RoundRobinLoadBalancer(_services[loopback].targets)
+                    ),
 
-                  a.instance?.forEach(
-                    //instance
-                    i => (
-                      i.port.$ = (os.env.PIPY_HTTP_LISTEN_OUTBOUND | 0) || 8081,
-                      i.hostName = loopback,
-                      i.ipAddr = loopback
+                    a.instance?.forEach?.(
+                      //instance
+                      i => (
+                        i.port.$ = (os.env.PIPY_HTTP_LISTEN_OUTBOUND | 0) || 8081,
+                        i.hostName = loopback,
+                        i.ipAddr = loopback
+                      )
                     )
                   )
                 )
               ),
               pipy.store.set('eureka-services', JSON.stringify(_services)),
               console.log('services: ' + JSON.stringify(_services)),
-              new Message(msg.head, JSON.encode(data))
+              new Message(msg.head, body)
             ) : (
               new Message(msg.head, msg.body)
             )
@@ -1023,9 +1028,11 @@ spec:
             _target = _target || (
               _balancers[__inbound.localAddress]?.select?.() || ''
             ),
-            msg.context.service = _services[__inbound.localAddress]?.name,
+            //msg.context.service = _services[__inbound.localAddress]?.name,
+            _context.service = _services[__inbound.localAddress]?.name,
             console.log(`${__inbound.localAddress} : ${_target}`),
-            msg.context.target = _target
+            //msg.context.target = _target
+            _context.target = _target
           )
         )
     update.js: |+
@@ -1093,11 +1100,11 @@ spec:
             }, null)
           )
         )
-        .encodeHttpRequest()
+        .encodeHTTPRequest()
         .connect(
           () => _url.host
         )
-        .decodeHttpResponse({bodiless: true})
+        .decodeHTTPResponse({bodiless: true})
         .handleMessageStart(
           msg => (
             msg.head.status === 200 && (
@@ -1131,11 +1138,11 @@ spec:
             }, null)
           )
         )
-        .encodeHttpRequest()
+        .encodeHTTPRequest()
         .connect(
           () => _url.host
         )
-        .decodeHttpResponse()
+        .decodeHTTPResponse()
         .replaceMessage(
           msg => (
             msg.head.status === 200 ? [
