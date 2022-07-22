@@ -1,0 +1,1759 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/instance: fsm
+    app.kubernetes.io/name: fsm
+    flomesh.io/control-plane: "true"
+    flomesh.io/inject: "false"
+  name: flomesh
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: fsm
+  namespace: flomesh
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: fsm-leader-election-role
+  namespace: kube-system
+rules:
+- apiGroups:
+  - ""
+  - coordination.k8s.io
+  resources:
+  - configmaps
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: fsm-role
+rules:
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - apps
+  resources:
+  - daemonsets
+  - deployments
+  - replicasets
+  - statefulsets
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  - ingressclasses
+  verbs:
+  - list
+  - get
+  - watch
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - list
+  - get
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  - pods
+  - services
+  - secrets
+  - configmaps
+  - volumes
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+  - deletecollection
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  - serviceaccounts
+  verbs:
+  - list
+  - get
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - watch
+- apiGroups:
+  - flomesh.io
+  resources:
+  - clusters
+  - proxyprofiles
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - flomesh.io
+  resources:
+  - clusters/finalizers
+  - proxyprofiles/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - flomesh.io
+  resources:
+  - clusters/status
+  - proxyprofiles/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - gatewayclasses
+  - gateways
+  - httproutes
+  - referencepolicies
+  - tcproutes
+  - tlsroutes
+  - udproutes
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - gatewayclasses/finalizers
+  - gateways/finalizers
+  - httproutes/finalizers
+  - referencepolicies/finalizers
+  - tcproutes/finalizers
+  - tlsroutes/finalizers
+  - udproutes/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - gatewayclasses/status
+  - gateways/status
+  - httproutes/status
+  - referencepolicies/status
+  - tcproutes/status
+  - tlsroutes/status
+  - udproutes/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cert-manager.io
+  resources:
+  - certificaterequests
+  - certificates
+  - issuers
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: fsm-leader-election-rolebinding
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: fsm-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: fsm
+  namespace: flomesh
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1
+    helm.sh/chart: fsm-0.1.1
+  name: fsm-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: fsm-role
+subjects:
+- kind: ServiceAccount
+  name: fsm
+  namespace: flomesh
+---
+apiVersion: v1
+data:
+  bootstrap_config.yaml: |
+    apiVersion: controller-runtime.sigs.k8s.io/v1alpha1
+    kind: ControllerManagerConfig
+    health:
+      healthProbeBindAddress: :8081
+    metrics:
+      bindAddress: 127.0.0.1:8080
+    webhook:
+      port: 9443
+    leaderElection:
+      leaderElect: true
+      resourceNamespace: kube-system
+      resourceName: bootstrap.flomesh.io
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: bootstrap-config
+  namespace: flomesh
+---
+apiVersion: v1
+data:
+  connector_config.yaml: |
+    apiVersion: controller-runtime.sigs.k8s.io/v1alpha1
+    kind: ControllerManagerConfig
+    health:
+      healthProbeBindAddress: :8081
+    metrics:
+      bindAddress: 127.0.0.1:8080
+    leaderElection:
+      leaderElect: true
+      resourceNamespace: kube-system
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: connector-config
+  namespace: flomesh
+---
+apiVersion: v1
+data:
+  flomesh.io_clusters.yaml: |2
+
+    ---
+    apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    metadata:
+      annotations:
+        controller-gen.kubebuilder.io/version: v0.7.0
+      creationTimestamp: null
+      name: clusters.flomesh.io
+    spec:
+      group: flomesh.io
+      names:
+        kind: Cluster
+        listKind: ClusterList
+        plural: clusters
+        singular: cluster
+      scope: Cluster
+      versions:
+      - additionalPrinterColumns:
+        - jsonPath: .spec.region
+          name: Region
+          type: string
+        - jsonPath: .spec.zone
+          name: Zone
+          type: string
+        - jsonPath: .spec.group
+          name: Group
+          type: string
+        - jsonPath: .spec.gateway
+          name: Gateway
+          type: string
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+        name: v1alpha1
+        schema:
+          openAPIV3Schema:
+            description: Cluster is the Schema for the clusters API
+            properties:
+              apiVersion:
+                description: 'APIVersion defines the versioned schema of this representation
+                  of an object. Servers should convert recognized schemas to the latest
+                  internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                type: string
+              kind:
+                description: 'Kind is a string value representing the REST resource this
+                  object represents. Servers may infer this from the endpoint the client
+                  submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                type: string
+              metadata:
+                type: object
+              spec:
+                description: ClusterSpec defines the desired state of Cluster
+                properties:
+                  controlPlaneRepoRootUrl:
+                    description: ControlPlaneRepoRootUrl, for Remote cluster mode, the
+                      linked clusters need to pull  scripts/config from control panel
+                      cluster, it's the full external URL of pipy repo of control panel
+                      which is accessed from outside
+                    type: string
+                  gateway:
+                    description: Gateway, the address of the gateway/ingress of this cluster
+                    type: string
+                  group:
+                    default: default
+                    description: Group, the locality information of this cluster
+                    type: string
+                  kubeconfig:
+                    description: Kubeconfig, The kubeconfig of the cluster you want to
+                      connnect to This's not needed if ClusterMode is InCluster, it will
+                      use InCluster config
+                    type: string
+                  mode:
+                    default: InCLuster
+                    description: ClusterMode, it indicates the Cluster resource is used
+                      for connecting local cluster  or a remote cluster.
+                    type: string
+                  region:
+                    default: default
+                    description: Region, the locality information of this cluster
+                    type: string
+                  replicas:
+                    default: 1
+                    description: Replicas, how many replicas of the cluster-connector
+                      will be running for this cluster,  it's in active-standby mode
+                    format: int32
+                    type: integer
+                  zone:
+                    default: default
+                    description: Zone, the locality information of this cluster
+                    type: string
+                type: object
+              status:
+                description: ClusterStatus defines the observed state of Cluster
+                properties:
+                  secret:
+                    type: string
+                required:
+                - secret
+                type: object
+            type: object
+        served: true
+        storage: true
+        subresources:
+          status: {}
+    status:
+      acceptedNames:
+        kind: ""
+        plural: ""
+      conditions: []
+      storedVersions: []
+  flomesh.io_proxyprofiles.yaml: |2
+
+    ---
+    apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    metadata:
+      annotations:
+        controller-gen.kubebuilder.io/version: v0.7.0
+      creationTimestamp: null
+      name: proxyprofiles.flomesh.io
+    spec:
+      group: flomesh.io
+      names:
+        kind: ProxyProfile
+        listKind: ProxyProfileList
+        plural: proxyprofiles
+        shortNames:
+        - pf
+        singular: proxyprofile
+      scope: Cluster
+      versions:
+      - additionalPrinterColumns:
+        - jsonPath: .spec.namespace
+          name: Namespace
+          type: string
+        - jsonPath: .spec.disabled
+          name: Disabled
+          type: boolean
+        - jsonPath: .spec.mode
+          name: Mode
+          type: string
+        - jsonPath: .spec.selector
+          name: Selector
+          priority: 1
+          type: string
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+        name: v1alpha1
+        schema:
+          openAPIV3Schema:
+            description: ProxyProfile is the Schema for the proxyprofiles API
+            properties:
+              apiVersion:
+                description: 'APIVersion defines the versioned schema of this representation
+                  of an object. Servers should convert recognized schemas to the latest
+                  internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                type: string
+              kind:
+                description: 'Kind is a string value representing the REST resource this
+                  object represents. Servers may infer this from the endpoint the client
+                  submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                type: string
+              metadata:
+                type: object
+              spec:
+                description: ProxyProfileSpec defines the desired state of ProxyProfile
+                properties:
+                  config:
+                    additionalProperties:
+                      type: string
+                    description: Config contains the configuration data. Each key must
+                      consist of alphanumeric characters, '-', '_' or '.'. Values with
+                      non-UTF-8 byte sequences must use the BinaryData field. This option
+                      is mutually exclusive with RepoBaseUrl option, you can only have
+                      either one.
+                    type: object
+                  disabled:
+                    default: false
+                    description: If this ProxyProfile is Disabled. A disabled ProxyProfile
+                      doesn't participate the sidecar injection process.
+                    type: boolean
+                  mode:
+                    default: Remote
+                    description: ConfigMode tells where the sidecar loads the scripts/config
+                      from, Local means from local files mounted by configmap,  Remote
+                      means loads from remote pipy repo. Default value is Remote
+                    type: string
+                  namespace:
+                    description: Namespace ProxyProfile will only match the pods in the
+                      namespace otherwise, match pods in all namespaces(in cluster)
+                    type: string
+                  restartPolicy:
+                    default: Never
+                    description: RestartPolicy indicates if ProxyProfile is updated, those
+                      already injected PODs should be updated or not. Default value is
+                      Never, it only has impact to new created PODs, existing PODs will
+                      not be updated.
+                    type: string
+                  restartScope:
+                    default: Owner
+                    description: RestartScope takes effect when RestartPolicy is Always,
+                      it tells if we can restart the entire POD to apply the changes or
+                      only the sidecar containers inside the POD. Default value is Owner.
+                    type: string
+                  selector:
+                    description: Selector is a label query over pods that should be injected
+                      This's optional, please NOTE a nil or empty Selector match nothing
+                      not everything.
+                    properties:
+                      matchExpressions:
+                        description: matchExpressions is a list of label selector requirements.
+                          The requirements are ANDed.
+                        items:
+                          description: A label selector requirement is a selector that
+                            contains values, a key, and an operator that relates the key
+                            and values.
+                          properties:
+                            key:
+                              description: key is the label key that the selector applies
+                                to.
+                              type: string
+                            operator:
+                              description: operator represents a key's relationship to
+                                a set of values. Valid operators are In, NotIn, Exists
+                                and DoesNotExist.
+                              type: string
+                            values:
+                              description: values is an array of string values. If the
+                                operator is In or NotIn, the values array must be non-empty.
+                                If the operator is Exists or DoesNotExist, the values
+                                array must be empty. This array is replaced during a strategic
+                                merge patch.
+                              items:
+                                type: string
+                              type: array
+                          required:
+                          - key
+                          - operator
+                          type: object
+                        type: array
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        description: matchLabels is a map of {key,value} pairs. A single
+                          {key,value} in the matchLabels map is equivalent to an element
+                          of matchExpressions, whose key field is "key", the operator
+                          is "In", and the values array contains only "value". The requirements
+                          are ANDed.
+                        type: object
+                    type: object
+                  serviceEnv:
+                    description: List of environment variables to set in each of the service
+                      containers. Cannot be updated.
+                    items:
+                      description: EnvVar represents an environment variable present in
+                        a Container.
+                      properties:
+                        name:
+                          description: Name of the environment variable. Must be a C_IDENTIFIER.
+                          type: string
+                        value:
+                          description: 'Variable references $(VAR_NAME) are expanded using
+                            the previously defined environment variables in the container
+                            and any service environment variables. If a variable cannot
+                            be resolved, the reference in the input string will be unchanged.
+                            Double $$ are reduced to a single $, which allows for escaping
+                            the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will produce the
+                            string literal "$(VAR_NAME)". Escaped references will never
+                            be expanded, regardless of whether the variable exists or
+                            not. Defaults to "".'
+                          type: string
+                        valueFrom:
+                          description: Source for the environment variable's value. Cannot
+                            be used if value is not empty.
+                          properties:
+                            configMapKeyRef:
+                              description: Selects a key of a ConfigMap.
+                              properties:
+                                key:
+                                  description: The key to select.
+                                  type: string
+                                name:
+                                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    TODO: Add other useful fields. apiVersion, kind, uid?'
+                                  type: string
+                                optional:
+                                  description: Specify whether the ConfigMap or its key
+                                    must be defined
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                            fieldRef:
+                              description: 'Selects a field of the pod: supports metadata.name,
+                                metadata.namespace, `metadata.labels[''<KEY>'']`, `metadata.annotations[''<KEY>'']`,
+                                spec.nodeName, spec.serviceAccountName, status.hostIP,
+                                status.podIP, status.podIPs.'
+                              properties:
+                                apiVersion:
+                                  description: Version of the schema the FieldPath is
+                                    written in terms of, defaults to "v1".
+                                  type: string
+                                fieldPath:
+                                  description: Path of the field to select in the specified
+                                    API version.
+                                  type: string
+                              required:
+                              - fieldPath
+                              type: object
+                            resourceFieldRef:
+                              description: 'Selects a resource of the container: only
+                                resources limits and requests (limits.cpu, limits.memory,
+                                limits.ephemeral-storage, requests.cpu, requests.memory
+                                and requests.ephemeral-storage) are currently supported.'
+                              properties:
+                                containerName:
+                                  description: 'Container name: required for volumes,
+                                    optional for env vars'
+                                  type: string
+                                divisor:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  description: Specifies the output format of the exposed
+                                    resources, defaults to "1"
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                                resource:
+                                  description: 'Required: resource to select'
+                                  type: string
+                              required:
+                              - resource
+                              type: object
+                            secretKeyRef:
+                              description: Selects a key of a secret in the pod's namespace
+                              properties:
+                                key:
+                                  description: The key of the secret to select from.  Must
+                                    be a valid secret key.
+                                  type: string
+                                name:
+                                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    TODO: Add other useful fields. apiVersion, kind, uid?'
+                                  type: string
+                                optional:
+                                  description: Specify whether the Secret or its key must
+                                    be defined
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                          type: object
+                      required:
+                      - name
+                      type: object
+                    type: array
+                    x-kubernetes-preserve-unknown-fields: true
+                  sidecars:
+                    description: List of sidecars, will be injected into POD. It must
+                      have at least ONE sidecar and up to 5 maximum.
+                    items:
+                      properties:
+                        args:
+                          description: 'Arguments to the entrypoint. The docker image''s
+                            CMD is used if this is not provided. Variable references $(VAR_NAME)
+                            are expanded using the container''s environment. If a variable
+                            cannot be resolved, the reference in the input string will
+                            be unchanged. The $(VAR_NAME) syntax can be escaped with a
+                            double $$, ie: $$(VAR_NAME). Escaped references will never
+                            be expanded, regardless of whether the variable exists or
+                            not. Cannot be updated.'
+                          items:
+                            type: string
+                          type: array
+                        command:
+                          description: 'Entrypoint array. Not executed within a shell.
+                            The docker image''s ENTRYPOINT is used if this is not provided.
+                            Variable references $(VAR_NAME) are expanded using the container''s
+                            environment. If a variable cannot be resolved, the reference
+                            in the input string will be unchanged. The $(VAR_NAME) syntax
+                            can be escaped with a double $$, ie: $$(VAR_NAME). Escaped
+                            references will never be expanded, regardless of whether the
+                            variable exists or not. Cannot be updated.'
+                          items:
+                            type: string
+                          type: array
+                        env:
+                          description: List of environment variables to set in the sidecar
+                            container. Cannot be updated.
+                          items:
+                            description: EnvVar represents an environment variable present
+                              in a Container.
+                            properties:
+                              name:
+                                description: Name of the environment variable. Must be
+                                  a C_IDENTIFIER.
+                                type: string
+                              value:
+                                description: 'Variable references $(VAR_NAME) are expanded
+                                  using the previously defined environment variables in
+                                  the container and any service environment variables.
+                                  If a variable cannot be resolved, the reference in the
+                                  input string will be unchanged. Double $$ are reduced
+                                  to a single $, which allows for escaping the $(VAR_NAME)
+                                  syntax: i.e. "$$(VAR_NAME)" will produce the string
+                                  literal "$(VAR_NAME)". Escaped references will never
+                                  be expanded, regardless of whether the variable exists
+                                  or not. Defaults to "".'
+                                type: string
+                              valueFrom:
+                                description: Source for the environment variable's value.
+                                  Cannot be used if value is not empty.
+                                properties:
+                                  configMapKeyRef:
+                                    description: Selects a key of a ConfigMap.
+                                    properties:
+                                      key:
+                                        description: The key to select.
+                                        type: string
+                                      name:
+                                        description: 'Name of the referent. More info:
+                                          https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          TODO: Add other useful fields. apiVersion, kind,
+                                          uid?'
+                                        type: string
+                                      optional:
+                                        description: Specify whether the ConfigMap or
+                                          its key must be defined
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                  fieldRef:
+                                    description: 'Selects a field of the pod: supports
+                                      metadata.name, metadata.namespace, `metadata.labels[''<KEY>'']`,
+                                      `metadata.annotations[''<KEY>'']`, spec.nodeName,
+                                      spec.serviceAccountName, status.hostIP, status.podIP,
+                                      status.podIPs.'
+                                    properties:
+                                      apiVersion:
+                                        description: Version of the schema the FieldPath
+                                          is written in terms of, defaults to "v1".
+                                        type: string
+                                      fieldPath:
+                                        description: Path of the field to select in the
+                                          specified API version.
+                                        type: string
+                                    required:
+                                    - fieldPath
+                                    type: object
+                                  resourceFieldRef:
+                                    description: 'Selects a resource of the container:
+                                      only resources limits and requests (limits.cpu,
+                                      limits.memory, limits.ephemeral-storage, requests.cpu,
+                                      requests.memory and requests.ephemeral-storage)
+                                      are currently supported.'
+                                    properties:
+                                      containerName:
+                                        description: 'Container name: required for volumes,
+                                          optional for env vars'
+                                        type: string
+                                      divisor:
+                                        anyOf:
+                                        - type: integer
+                                        - type: string
+                                        description: Specifies the output format of the
+                                          exposed resources, defaults to "1"
+                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                        x-kubernetes-int-or-string: true
+                                      resource:
+                                        description: 'Required: resource to select'
+                                        type: string
+                                    required:
+                                    - resource
+                                    type: object
+                                  secretKeyRef:
+                                    description: Selects a key of a secret in the pod's
+                                      namespace
+                                    properties:
+                                      key:
+                                        description: The key of the secret to select from.  Must
+                                          be a valid secret key.
+                                        type: string
+                                      name:
+                                        description: 'Name of the referent. More info:
+                                          https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          TODO: Add other useful fields. apiVersion, kind,
+                                          uid?'
+                                        type: string
+                                      optional:
+                                        description: Specify whether the Secret or its
+                                          key must be defined
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                type: object
+                            required:
+                            - name
+                            type: object
+                          type: array
+                          x-kubernetes-preserve-unknown-fields: true
+                        image:
+                          description: Docker image name. This field is optional to allow
+                            higher level config management to default or override container
+                            images in workload controllers like Deployments and StatefulSets.
+                          type: string
+                        imagePullPolicy:
+                          description: Image pull policy. One of Always, Never, IfNotPresent.
+                            Defaults to Always if :latest tag is specified, or IfNotPresent
+                            otherwise. Cannot be updated.
+                          type: string
+                        name:
+                          description: Name of the container specified as a DNS_LABEL.
+                            Each container in a pod must have a unique name (DNS_LABEL).
+                            Cannot be updated.
+                          type: string
+                        resources:
+                          description: Compute Resources required by this container. Cannot
+                            be updated.
+                          properties:
+                            limits:
+                              additionalProperties:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              description: 'Limits describes the maximum amount of compute
+                                resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                              type: object
+                            requests:
+                              additionalProperties:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              description: 'Requests describes the minimum amount of compute
+                                resources required. If Requests is omitted for a container,
+                                it defaults to Limits if that is explicitly specified,
+                                otherwise to an implementation-defined value. More info:
+                                https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                              type: object
+                          type: object
+                        startupScriptName:
+                          description: The file name of entrypoint script for starting
+                            the PIPY instance. If not provided, the default value is the
+                            value of Name field with surfix .js. For example, if the Name
+                            of the sidecar is proxy, it looks up proxy.js in config folder.
+                            It only works in local config mode, if pulls scripts from
+                            remote repo, the repo server returns the name of startup script.
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    maxItems: 5
+                    minItems: 1
+                    type: array
+                type: object
+              status:
+                description: ProxyProfileStatus defines the observed state of ProxyProfile
+                properties:
+                  configMaps:
+                    additionalProperties:
+                      type: string
+                    description: All associated config maps, key is namespace and value
+                      is the name of configmap
+                    type: object
+                required:
+                - configMaps
+                type: object
+            type: object
+        served: true
+        storage: true
+        subresources:
+          status: {}
+    status:
+      acceptedNames:
+        kind: ""
+        plural: ""
+      conditions: []
+      storedVersions: []
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: crds-resources
+  namespace: flomesh
+---
+apiVersion: v1
+data:
+  cluster_local.yaml: |-
+    apiVersion: flomesh.io/v1alpha1
+    kind: Cluster
+    metadata:
+      name: local
+    spec:
+      mode: InCluster
+  default_proxyprofile.yaml: |-
+    apiVersion: flomesh.io/v1alpha1
+    kind: ProxyProfile
+    metadata:
+      name: default-proxyprofile
+      labels:
+        sidecar.flomesh.io/is-default-proxyprofile: "true"
+    spec:
+      mode: Remote
+      sidecars:
+      - name: sidecar
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: jobs-config
+  namespace: flomesh
+---
+apiVersion: v1
+data:
+  manager_config.yaml: |
+    apiVersion: controller-runtime.sigs.k8s.io/v1alpha1
+    kind: ControllerManagerConfig
+    health:
+      healthProbeBindAddress: :8081
+    metrics:
+      bindAddress: 127.0.0.1:8080
+    webhook:
+      port: 9443
+    leaderElection:
+      leaderElect: true
+      resourceNamespace: kube-system
+      resourceName: manager.flomesh.io
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: manager-config
+  namespace: flomesh
+---
+apiVersion: v1
+data:
+  mesh_config.json: |-
+    {
+      "is-control-plane": true,
+
+      "images": {
+        "pipy-image": "flomesh/pipy-loong64:0.8.0-31",
+        "proxy-init-image": "flomesh/fsm-proxy-init:loong64",
+        "cluster-connector-image": "flomesh/fsm-cluster-connector:loong64",
+        "wait-for-it-image": "flomesh/wait-for-it:loong64"
+      },
+
+      "repo": {
+        "root-url": "http://repo-service.flomesh.svc:6060",
+        "path" : "/repo",
+        "api-path": "/api/v1/repo"
+      },
+
+      "service-aggregator": {
+        "addr": "service-aggregator.flomesh.svc:6767"
+      },
+
+      "webhook": {
+        "service-name": "webhook-service"
+      },
+
+      "ingress": {
+        "enabled": true,
+        "deploy-name": "ingress-pipy",
+        "service-name": "ingress-pipy-controller"
+      },
+
+      "gateway-api": {
+        "enabled": false
+      },
+
+      "certificate": {
+        "manager": "archon"
+      },
+
+      "cluster": {
+        "region": "default",
+        "zone": "default",
+        "group": "default",
+        "name": "local",
+        "connector": {
+          "secret-mount-path": "/.kube",
+          "configmap-name": "connector-config",
+          "config-file": "connector_config.yaml",
+          "log-level": 2,
+          "service-account-name": "fsm",
+          "resources": {
+            "requests-cpu": "200m",
+            "requests-memory": "200Mi",
+            "limits-cpu": "1000m",
+            "limits-memory": "1000Mi"
+          }
+        }
+      }
+    }
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: mesh-config
+  namespace: flomesh
+---
+apiVersion: v1
+binaryData:
+  scripts.tar.gz: |
+    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
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: repo-init-scripts
+  namespace: flomesh
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-pipy
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: ingress-pipy-controller
+  namespace: flomesh
+spec:
+  ports:
+  - name: http
+    nodePort: 30607
+    port: 80
+    protocol: TCP
+    targetPort: ingress
+  selector:
+    app: fsm-ingress-pipy
+    flomesh.io/app: fsm-ingress-pipy
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: repo
+    app.kubernetes.io/instance: repo
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: repo-service
+  namespace: flomesh
+spec:
+  ports:
+  - name: repo
+    port: 6060
+    protocol: TCP
+    targetPort: repo
+  selector:
+    app: fsm-repo
+    flomesh.io/app: fsm-repo
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: service-aggregator
+    app.kubernetes.io/instance: bootstrap
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: service-aggregator
+  namespace: flomesh
+spec:
+  ports:
+  - name: aggregator
+    port: 6767
+    protocol: TCP
+    targetPort: aggregator
+  selector:
+    app: fsm-bootstrap
+    flomesh.io/app: fsm-bootstrap
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: manager
+    app.kubernetes.io/instance: manager
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: webhook-service
+  namespace: flomesh
+spec:
+  ports:
+  - name: webhook
+    port: 443
+    protocol: TCP
+    targetPort: webhook
+  selector:
+    app: fsm-manager
+    flomesh.io/app: fsm-manager
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: bootstrap
+    app.kubernetes.io/instance: bootstrap
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: bootstrap
+  namespace: flomesh
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fsm-bootstrap
+      flomesh.io/app: fsm-bootstrap
+  template:
+    metadata:
+      labels:
+        app: fsm-bootstrap
+        app.kubernetes.io/component: bootstrap
+        app.kubernetes.io/instance: bootstrap
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: fsm
+        app.kubernetes.io/version: 0.1.1-beta12
+        flomesh.io/app: fsm-bootstrap
+        helm.sh/chart: fsm-0.1.1
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+                - loongarch64
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: flomesh.io/app
+                  operator: In
+                  values:
+                  - fsm-bootstrap
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+      containers:
+      - args:
+        - --v=2
+        - --fsm-namespace=flomesh
+        - --repo-host=repo-service.flomesh.svc
+        - --repo-port=6060
+        - --aggregator-port=6767
+        image: flomesh/fsm-bootstrap:loong64
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          initialDelaySeconds: 5
+          tcpSocket:
+            port: 6767
+          timeoutSeconds: 5
+        name: bootstrap
+        ports:
+        - containerPort: 6767
+          name: aggregator
+        readinessProbe:
+          initialDelaySeconds: 5
+          tcpSocket:
+            port: 6767
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1000Mi
+          requests:
+            cpu: 200m
+            memory: 200Mi
+        volumeMounts:
+        - mountPath: /repo
+          name: shared-repo
+      initContainers:
+      - command:
+        - bash
+        - -c
+        - |
+          /wait-for-it.sh --strict --timeout=0 \
+            --host=repo-service.flomesh.svc \
+            --port=6060 \
+            -- echo "REPO IS READY!"
+        image: flomesh/wait-for-it:loong64
+        imagePullPolicy: IfNotPresent
+        name: wait-repo
+      - command:
+        - sh
+        - -c
+        - |
+          tar -C /repo -zxvf /scripts.tar.gz
+          kubectl apply -f /crds
+          kubectl delete cluster local --ignore-not-found=true
+          kubectl delete pf default-proxyprofile --ignore-not-found=true
+        image: flomesh/toolbox:loong64
+        imagePullPolicy: IfNotPresent
+        name: bootstrap-init
+        volumeMounts:
+        - mountPath: /scripts.tar.gz
+          name: repo-init-scripts
+          subPath: scripts.tar.gz
+        - mountPath: /crds
+          name: crds-resources
+        - mountPath: /repo
+          name: shared-repo
+      priorityClassName: system-node-critical
+      serviceAccountName: fsm
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          name: repo-init-scripts
+        name: repo-init-scripts
+      - configMap:
+          name: crds-resources
+        name: crds-resources
+      - emptyDir: {}
+        name: shared-repo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-pipy
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: ingress-pipy
+  namespace: flomesh
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fsm-ingress-pipy
+      flomesh.io/app: fsm-ingress-pipy
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: fsm-ingress-pipy
+        app.kubernetes.io/component: controller
+        app.kubernetes.io/instance: ingress-pipy
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: fsm
+        app.kubernetes.io/version: 0.1.1-beta12
+        flomesh.io/app: fsm-ingress-pipy
+        helm.sh/chart: fsm-0.1.1
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+                - loongarch64
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: flomesh.io/app
+                  operator: In
+                  values:
+                  - fsm-ingress-pipy
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+      containers:
+      - args:
+        - --v=2
+        - --fsm-namespace=flomesh
+        image: flomesh/fsm-ingress-pipy:loong64
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          initialDelaySeconds: 5
+          tcpSocket:
+            port: 8000
+          timeoutSeconds: 5
+        name: ingress
+        ports:
+        - containerPort: 8000
+          name: ingress
+        - containerPort: 8081
+          name: health
+        readinessProbe:
+          initialDelaySeconds: 5
+          tcpSocket:
+            port: 8000
+          timeoutSeconds: 5
+        securityContext:
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - ALL
+      initContainers:
+      - command:
+        - bash
+        - -c
+        - |
+          /wait-for-it.sh --strict --timeout=0 \
+            --host=repo-service.flomesh.svc \
+            --port=6060 \
+            -- echo "REPO IS READY!"
+        image: flomesh/wait-for-it:loong64
+        imagePullPolicy: IfNotPresent
+        name: wait-repo
+      - command:
+        - bash
+        - -c
+        - |
+          /wait-for-it.sh --strict --timeout=0 \
+            --host=webhook-service.flomesh.svc \
+            --port=443 \
+            -- echo "MANAGER IS READY!"
+        image: flomesh/wait-for-it:loong64
+        imagePullPolicy: IfNotPresent
+        name: wait-manager
+      - command:
+        - bash
+        - -c
+        - |
+          /wait-for-it.sh --strict --timeout=0 \
+            --host=service-aggregator.flomesh.svc \
+            --port=6767 \
+            -- echo "AGGREGATOR IS READY!"
+        image: flomesh/wait-for-it:loong64
+        imagePullPolicy: IfNotPresent
+        name: wait-aggregator
+      serviceAccountName: fsm
+      terminationGracePeriodSeconds: 60
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: manager
+    app.kubernetes.io/instance: manager
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: manager
+  namespace: flomesh
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fsm-manager
+      flomesh.io/app: fsm-manager
+  template:
+    metadata:
+      labels:
+        app: fsm-manager
+        app.kubernetes.io/component: manager
+        app.kubernetes.io/instance: manager
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: fsm
+        app.kubernetes.io/version: 0.1.1-beta12
+        flomesh.io/app: fsm-manager
+        helm.sh/chart: fsm-0.1.1
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+                - loongarch64
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: flomesh.io/app
+                  operator: In
+                  values:
+                  - fsm-manager
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+      containers:
+      - args:
+        - --v=2
+        - --fsm-namespace=flomesh
+        - --config=manager_config.yaml
+        command:
+        - /manager
+        image: flomesh/fsm-manager:loong64
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 1
+          timeoutSeconds: 5
+        name: manager
+        ports:
+        - containerPort: 9443
+          name: webhook
+        - containerPort: 8081
+          name: health
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 1
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 2000m
+            memory: 2000Mi
+          requests:
+            cpu: 200m
+            memory: 200Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+        volumeMounts:
+        - mountPath: /manager_config.yaml
+          name: manager-config
+          subPath: manager_config.yaml
+      priorityClassName: system-node-critical
+      serviceAccountName: fsm
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          name: manager-config
+        name: manager-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: repo
+    app.kubernetes.io/instance: repo
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: repo
+  namespace: flomesh
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fsm-repo
+      flomesh.io/app: fsm-repo
+  template:
+    metadata:
+      labels:
+        app: fsm-repo
+        app.kubernetes.io/component: repo
+        app.kubernetes.io/instance: repo
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: fsm
+        app.kubernetes.io/version: 0.1.1-beta12
+        flomesh.io/app: fsm-repo
+        helm.sh/chart: fsm-0.1.1
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+                - loongarch64
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: flomesh.io/app
+                  operator: In
+                  values:
+                  - fsm-repo
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+      containers:
+      - command:
+        - sh
+        - -c
+        - |
+          /usr/local/bin/pipy --admin-port=6060
+        image: flomesh/pipy-loong64:0.30.0-158
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          initialDelaySeconds: 1
+          tcpSocket:
+            port: 6060
+          timeoutSeconds: 5
+        name: repo
+        ports:
+        - containerPort: 6060
+          name: repo
+        readinessProbe:
+          initialDelaySeconds: 1
+          tcpSocket:
+            port: 6060
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 20M
+      priorityClassName: system-node-critical
+      serviceAccountName: fsm
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: install-default-components
+  namespace: flomesh
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: fsm
+        app.kubernetes.io/version: 0.1.1-beta12
+        helm.sh/chart: fsm-0.1.1
+      name: install-default-components
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+                - loongarch64
+      containers:
+      - command:
+        - sh
+        - -c
+        - |
+          kubectl apply -f /manifests/
+        image: flomesh/toolbox:loong64
+        imagePullPolicy: IfNotPresent
+        name: install
+        volumeMounts:
+        - mountPath: /manifests
+          name: jobs-config
+      initContainers:
+      - command:
+        - bash
+        - -c
+        - |
+          /wait-for-it.sh --strict --timeout=0 \
+            --host=repo-service.flomesh.svc \
+            --port=6060 \
+            -- echo "REPO IS READY!"
+        image: flomesh/wait-for-it:loong64
+        imagePullPolicy: IfNotPresent
+        name: wait-repo
+      - command:
+        - bash
+        - -c
+        - |
+          /wait-for-it.sh --strict --timeout=0 \
+            --host=webhook-service.flomesh.svc \
+            --port=443 \
+            -- echo "MANAGER IS READY!"
+        image: flomesh/wait-for-it:loong64
+        imagePullPolicy: IfNotPresent
+        name: wait-manager
+      - command:
+        - bash
+        - -c
+        - |
+          /wait-for-it.sh --strict --timeout=0 \
+            --host=service-aggregator.flomesh.svc \
+            --port=6767 \
+            -- echo "AGGREGATOR IS READY!"
+        image: flomesh/wait-for-it:loong64
+        imagePullPolicy: IfNotPresent
+        name: wait-aggregator
+      restartPolicy: Never
+      serviceAccountName: fsm
+      volumes:
+      - configMap:
+          name: jobs-config
+        name: jobs-config
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    pipy.ingress.kubernetes.io/rewrite-target-from: ^/mesh/?
+    pipy.ingress.kubernetes.io/rewrite-target-to: /
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: pipy-repo
+  namespace: flomesh
+spec:
+  ingressClassName: pipy
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: repo-service
+            port:
+              number: 6060
+        path: /mesh
+        pathType: Prefix
+---
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: pipy
+spec:
+  controller: flomesh.io/ingress-pipy
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: flomesh-mutating-webhook-configuration
+webhooks: []
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: fsm
+    app.kubernetes.io/version: 0.1.1-beta12
+    helm.sh/chart: fsm-0.1.1
+  name: flomesh-validating-webhook-configuration
+webhooks: []

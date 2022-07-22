@@ -20,144 +20,27 @@ $ k3d cluster create spring-demo -p "81:80@loadbalancer" --k3s-server-arg '--no-
 
 所有 Flomesh 组件以及用于 demo 的 yamls 文件都位于这个目录中。
 
-### 安装 Cert Manager
+### 安装 FSM
 
 ```shell
-$ kubectl apply -f artifacts/cert-manager-v1.3.1.yaml
-customresourcedefinition.apiextensions.k8s.io/certificaterequests.cert-manager.io created
-customresourcedefinition.apiextensions.k8s.io/certificates.cert-manager.io created
-customresourcedefinition.apiextensions.k8s.io/challenges.acme.cert-manager.io created
-customresourcedefinition.apiextensions.k8s.io/clusterissuers.cert-manager.io created
-customresourcedefinition.apiextensions.k8s.io/issuers.cert-manager.io created
-customresourcedefinition.apiextensions.k8s.io/orders.acme.cert-manager.io created
-namespace/cert-manager created
-serviceaccount/cert-manager-cainjector created
-serviceaccount/cert-manager created
-serviceaccount/cert-manager-webhook created
-clusterrole.rbac.authorization.k8s.io/cert-manager-cainjector created
-clusterrole.rbac.authorization.k8s.io/cert-manager-controller-issuers created
-clusterrole.rbac.authorization.k8s.io/cert-manager-controller-clusterissuers created
-clusterrole.rbac.authorization.k8s.io/cert-manager-controller-certificates created
-clusterrole.rbac.authorization.k8s.io/cert-manager-controller-orders created
-clusterrole.rbac.authorization.k8s.io/cert-manager-controller-challenges created
-clusterrole.rbac.authorization.k8s.io/cert-manager-controller-ingress-shim created
-clusterrole.rbac.authorization.k8s.io/cert-manager-view created
-clusterrole.rbac.authorization.k8s.io/cert-manager-edit created
-clusterrole.rbac.authorization.k8s.io/cert-manager-controller-approve:cert-manager-io created
-clusterrole.rbac.authorization.k8s.io/cert-manager-webhook:subjectaccessreviews created
-clusterrolebinding.rbac.authorization.k8s.io/cert-manager-cainjector created
-clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-issuers created
-clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-clusterissuers created
-clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-certificates created
-clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-orders created
-clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-challenges created
-clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-ingress-shim created
-clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-approve:cert-manager-io created
-clusterrolebinding.rbac.authorization.k8s.io/cert-manager-webhook:subjectaccessreviews created
-role.rbac.authorization.k8s.io/cert-manager-cainjector:leaderelection created
-role.rbac.authorization.k8s.io/cert-manager:leaderelection created
-role.rbac.authorization.k8s.io/cert-manager-webhook:dynamic-serving created
-rolebinding.rbac.authorization.k8s.io/cert-manager-cainjector:leaderelection created
-rolebinding.rbac.authorization.k8s.io/cert-manager:leaderelection created
-rolebinding.rbac.authorization.k8s.io/cert-manager-webhook:dynamic-serving created
-service/cert-manager created
-service/cert-manager-webhook created
-deployment.apps/cert-manager-cainjector created
-deployment.apps/cert-manager created
-deployment.apps/cert-manager-webhook created
-mutatingwebhookconfiguration.admissionregistration.k8s.io/cert-manager-webhook created
-validatingwebhookconfiguration.admissionregistration.k8s.io/cert-manager-webhook created
-```
-
-注意: 要保证 `cert-manager` 命名空间中所有的 pod 都正常运行：
-
-```shell
-$ kubectl get pod -n cert-manager
-NAME                                       READY   STATUS    RESTARTS   AGE
-cert-manager-webhook-56fdcbb848-q7fn5      1/1     Running   0          98s
-cert-manager-59f6c76f4b-z5lgf              1/1     Running   0          98s
-cert-manager-cainjector-59f76f7fff-flrr7   1/1     Running   0          98s
-```
-
-### 安装 Pipy Operator
-
-```shell
-$ kubectl apply -f artifacts/pipy-operator.yaml
-```
-
-执行完命令后会看到类似的结果：
-
-```
-namespace/flomesh created
-customresourcedefinition.apiextensions.k8s.io/proxies.flomesh.io created
-customresourcedefinition.apiextensions.k8s.io/proxyprofiles.flomesh.io created
-serviceaccount/operator-manager created
-role.rbac.authorization.k8s.io/leader-election-role created
-clusterrole.rbac.authorization.k8s.io/manager-role created
-clusterrole.rbac.authorization.k8s.io/metrics-reader created
-clusterrole.rbac.authorization.k8s.io/proxy-role created
-rolebinding.rbac.authorization.k8s.io/leader-election-rolebinding created
-clusterrolebinding.rbac.authorization.k8s.io/manager-rolebinding created
-clusterrolebinding.rbac.authorization.k8s.io/proxy-rolebinding created
-configmap/manager-config created
-service/operator-manager-metrics-service created
-service/proxy-injector-svc created
-service/webhook-service created
-deployment.apps/operator-manager created
-deployment.apps/proxy-injector created
-certificate.cert-manager.io/serving-cert created
-issuer.cert-manager.io/selfsigned-issuer created
-mutatingwebhookconfiguration.admissionregistration.k8s.io/mutating-webhook-configuration created
-mutatingwebhookconfiguration.admissionregistration.k8s.io/proxy-injector-webhook-cfg created
-validatingwebhookconfiguration.admissionregistration.k8s.io/validating-webhook-configuration created
+$ kubectl apply -f fsm/fsm.yaml
 ```
 
 注意：要保证 `flomesh` 命名空间中所有的 pod 都正常运行：
 
 ```shell
 $ kubectl get pod -n flomesh
-NAME                               READY   STATUS    RESTARTS   AGE
-proxy-injector-5bccc96595-spl6h    1/1     Running   0          39s
-operator-manager-c78bf8d5f-wqgb4   1/1     Running   0          39s
+NAME                                       READY   STATUS      RESTARTS   AGE
+bootstrap-57b7df55f5-f4gvd                 1/1     Running     0          14m
+cluster-connector-local-69c675d78d-54k7p   1/1     Running     0          13m
+ingress-pipy-78878cf4b9-6l8cv              1/1     Running     0          14m
+install-default-components-skdlz           0/1     Completed   0          14m
+manager-74b5bb7bd4-bc9b2                   1/1     Running     0          14m
+repo-66d784cdcd-ggtxh                      1/1     Running     0          14m
 ```
 
-### 安装 Ingress 控制器：ingress-pipy
 
-```shell
-$ kubectl apply -f ingress/ingress-pipy.yaml
-namespace/ingress-pipy created
-customresourcedefinition.apiextensions.k8s.io/ingressparameters.flomesh.io created
-serviceaccount/ingress-pipy created
-role.rbac.authorization.k8s.io/ingress-pipy-leader-election-role created
-clusterrole.rbac.authorization.k8s.io/ingress-pipy-role created
-rolebinding.rbac.authorization.k8s.io/ingress-pipy-leader-election-rolebinding created
-clusterrolebinding.rbac.authorization.k8s.io/ingress-pipy-rolebinding created
-configmap/ingress-config created
-service/ingress-pipy-cfg created
-service/ingress-pipy-controller created
-service/ingress-pipy-defaultbackend created
-service/webhook-service created
-deployment.apps/ingress-pipy-cfg created
-deployment.apps/ingress-pipy-controller created
-deployment.apps/ingress-pipy-manager created
-certificate.cert-manager.io/serving-cert created
-issuer.cert-manager.io/selfsigned-issuer created
-mutatingwebhookconfiguration.admissionregistration.k8s.io/mutating-webhook-configuration configured
-validatingwebhookconfiguration.admissionregistration.k8s.io/validating-webhook-configuration configured
-```
-
-检查 `ingress-pipy` 命名空间下 pod 的状态：
-
-```shell
-$ kubectl get pod -n ingress-pipy
-NAME                                       READY   STATUS    RESTARTS   AGE
-svclb-ingress-pipy-controller-8pk8k        1/1     Running   0          71s
-ingress-pipy-cfg-6bc649cfc7-8njk7          1/1     Running   0          71s
-ingress-pipy-controller-76cd866d78-m7gfp   1/1     Running   0          71s
-ingress-pipy-manager-5f568ff988-tw5w6      0/1     Running   0          70s
-```
-
-至此，你已经成功安装 Flomesh 的所有组件，包括 operator 和 ingress 控制器。
+至此，你已经成功安装 Flomesh FSM 的所有组件，包括 ingress 控制器。
 
 ## 中间件
 
