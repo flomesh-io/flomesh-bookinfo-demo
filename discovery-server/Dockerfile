@@ -1,4 +1,4 @@
-FROM flomesh/adoptopenjdk:8-alpine-slim
+FROM flomesh/adoptopenjdk:8-ubuntu-slim
 ARG JAR_FILE=target/discovery-server.jar
 COPY ${JAR_FILE} app.jar
 
